@@ -1,6 +1,6 @@
 {
   "name": "anything-download-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open-source cross-platform download manager with multi-segment acceleration, browser integration, and torrent support",
   "main": "dist/main/index.js",
   "author": "Naman Rathi <naman@example.com>",
@@ -60,5 +60,13 @@
     "zustand": "^5.0.2",
     "lucide-react": "^0.468.0",
     "clsx": "^2.1.1"
+  },
+  "overrides": {
+    "semver": "^7.7.1",
+    "tar": "^6.2.1",
+    "xml2js": "^0.6.2",
+    "cross-spawn": "^7.0.6",
+    "nanoid": "^3.3.8",
+    "esbuild": "^0.25.0"
   }
 }
