@@ -55,7 +55,7 @@ export const ReportIssueModal: React.FC = () => {
   };
 
   const handleOpenGitHubIssue = () => {
-    const base = 'https://github.com/namanrathi/anything-download-manager/issues/new';
+    const base = 'https://github.com/namanrathi07/anything-download-manager/issues/new';
     const label = issueType === 'bug' ? 'bug' : issueType === 'feature' ? 'enhancement' : 'download-issue';
 
     const bodyContent = [

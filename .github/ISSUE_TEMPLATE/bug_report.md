@@ -3,7 +3,7 @@ name: Bug Report
 about: Create a report to help us improve Anything Download Manager
 title: '[BUG] '
 labels: 'bug'
-assignees: 'namanrathi'
+assignees: 'namanrathi07'
 ---
 
 ### Describe the Bug

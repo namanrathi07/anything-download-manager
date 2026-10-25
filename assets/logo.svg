@@ -1,0 +1,95 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b132b"/>
+      <stop offset="50%" stop-color="#050a18"/>
+      <stop offset="100%" stop-color="#02040a"/>
+    </linearGradient>
+
+    <!-- Outer Rim Glow -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#6366f1" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Central Stream Main Gradient -->
+    <linearGradient id="centerStream" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <!-- Left Stream Gradient -->
+    <linearGradient id="leftStream" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <!-- Right Stream Gradient -->
+    <linearGradient id="rightStream" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+
+    <!-- Tray Baseline Gradient -->
+    <linearGradient id="trayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+
+    <!-- Radial Ambient Glow -->
+    <radialGradient id="centerGlow" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#3b82f6" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle Drop Shadow Filter -->
+    <filter id="shadowFilter" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.3"/>
+    </filter>
+
+    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base App Icon -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" stroke="url(#rimGrad)" stroke-width="3" stroke-opacity="0.7"/>
+
+  <!-- Radial Background Glow -->
+  <circle cx="256" cy="240" r="190" fill="url(#centerGlow)"/>
+
+  <!-- Inner Content Group with Shadow -->
+  <g filter="url(#shadowFilter)">
+    <!-- Stream 1 (Left Wing / Multi-segment Stream) -->
+    <path d="M192 140C192 128.954 183.046 120 172 120C160.954 120 152 128.954 152 140V232C152 238.365 155.176 244.341 160.485 247.947L192 269.378V140Z" fill="url(#leftStream)" opacity="0.85"/>
+
+    <!-- Stream 2 (Right Wing / Multi-segment Stream) -->
+    <path d="M320 140C320 128.954 328.954 120 340 120C351.046 120 360 128.954 360 140V232C360 238.365 356.824 244.341 351.515 247.947L320 269.378V140Z" fill="url(#rightStream)" opacity="0.85"/>
+
+    <!-- Central High-Velocity Download Core (Arrow Shape with "A" Geometry) -->
+    <!-- The Central Stem -->
+    <path d="M256 96C242.745 96 232 106.745 232 120V260H200C185.752 260 178.618 277.218 188.692 287.292L244.692 343.292C250.941 349.541 261.059 349.541 267.308 343.292L323.308 287.292C333.382 277.218 326.248 260 312 260H280V120C280 106.745 269.255 96 256 96Z" fill="url(#centerStream)"/>
+
+    <!-- Inner Highlight / Speed Core on Arrow -->
+    <path d="M256 124V252M256 252L236 272M256 252L276 272" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    
+    <!-- Kinetic Download Energy Pulses (Chevron Stream Indicators) -->
+    <path d="M228 170L256 194L284 170" stroke="#bae6fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+    <path d="M220 220L256 250L292 220" stroke="#bae6fd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+
+    <!-- Bottom Receiver Bracket / Download Destination Tray -->
+    <path d="M128 340V372C128 389.673 142.327 404 160 404H352C369.673 404 384 389.673 384 372V340" stroke="url(#trayGrad)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Glowing Tray Base Dot Accents -->
+    <circle cx="128" cy="340" r="10" fill="#38bdf8"/>
+    <circle cx="384" cy="340" r="10" fill="#818cf8"/>
+  </g>
+</svg>

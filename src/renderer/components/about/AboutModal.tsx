@@ -31,8 +31,13 @@ export const AboutModal: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200 dark:border-surface-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-primary-400 flex items-center justify-center text-white shadow-md shadow-primary-500/20">
-              <Zap className="w-5 h-5 fill-current" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-primary-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-primary-500/25 p-2">
+              <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+                <path d="M20 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+                <path d="M5 19H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
             </div>
             <div>
               <h3 className="font-bold text-sm text-surface-900 dark:text-surface-100">
@@ -67,11 +72,11 @@ export const AboutModal: React.FC = () => {
             </div>
 
             <button
-              onClick={() => openLink('https://github.com/namanrathi')}
+              onClick={() => openLink('https://github.com/namanrathi07')}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-800 hover:bg-surface-700 text-white rounded-lg text-xs font-medium transition border border-surface-700 shadow-sm"
             >
               <Github className="w-4 h-4" />
-              <span>@namanrathi</span>
+              <span>@namanrathi07</span>
             </button>
           </div>
 
@@ -143,7 +148,7 @@ export const AboutModal: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => openLink('https://github.com/namanrathi/anything-download-manager')}
+              onClick={() => openLink('https://github.com/namanrathi07/anything-download-manager')}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-surface-700 dark:text-surface-300 hover:text-white bg-surface-200 dark:bg-surface-800 hover:bg-surface-700 rounded-lg transition"
             >
               <Github className="w-3.5 h-3.5" />
@@ -151,7 +156,7 @@ export const AboutModal: React.FC = () => {
             </button>
 
             <button
-              onClick={() => openLink('https://namanrathi.github.io/anything-download-manager')}
+              onClick={() => openLink('https://namanrathi07.github.io/anything-download-manager')}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition shadow-sm"
             >
               <span>Website</span>

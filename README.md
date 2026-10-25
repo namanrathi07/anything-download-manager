@@ -5,10 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/namanrathi/anything-download-manager/releases"><img src="https://img.shields.io/github/v/release/namanrathi/anything-download-manager?color=blue&style=for-the-badge" alt="Release"></a>
+  <a href="https://github.com/namanrathi07/anything-download-manager/releases"><img src="https://img.shields.io/github/v/release/namanrathi07/anything-download-manager?color=blue&style=for-the-badge" alt="Release"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-emerald.svg?style=for-the-badge" alt="License"></a>
   <a href="#platform-support"><img src="https://img.shields.io/badge/Platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=for-the-badge" alt="Platforms"></a>
-  <a href="https://namanrathi.github.io/anything-download-manager"><img src="https://img.shields.io/badge/Website-Live%20Demo-6366f1.svg?style=for-the-badge" alt="Website"></a>
+  <a href="https://namanrathi07.github.io/anything-download-manager"><img src="https://img.shields.io/badge/Website-Live%20Demo-6366f1.svg?style=for-the-badge" alt="Website"></a>
 </p>
 
 ---
@@ -72,7 +72,7 @@ Unlike proprietary download tools limited to Windows or locked behind paid trial
 ### 2. Install & Run Locally
 ```bash
 # Clone the repository
-git clone https://github.com/namanrathi/anything-download-manager.git
+git clone https://github.com/namanrathi07/anything-download-manager.git
 cd anything-download-manager
 
 # Install dependencies (auto-builds native bindings)
@@ -126,15 +126,15 @@ All installers will be generated in the `release/` folder.
 
 We welcome feedback, suggestions, and contributions!
 - **In-App**: Click **"Report Issue"** in the sidebar to auto-generate diagnostic details and open a GitHub issue.
-- **GitHub**: Visit [Issues](https://github.com/namanrathi/anything-download-manager/issues) to browse known issues or submit a report.
+- **GitHub**: Visit [Issues](https://github.com/namanrathi07/anything-download-manager/issues) to browse known issues or submit a report.
 
 ---
 
 ## 👨‍💻 Creator & Maintainer
 
 **Naman Rathi**
-- GitHub: [@namanrathi](https://github.com/namanrathi)
-- Project Website: [https://namanrathi.github.io/anything-download-manager](https://namanrathi.github.io/anything-download-manager)
+- GitHub: [@namanrathi07](https://github.com/namanrathi07)
+- Project Website: [https://namanrathi07.github.io/anything-download-manager](https://namanrathi07.github.io/anything-download-manager)
 
 ---
 

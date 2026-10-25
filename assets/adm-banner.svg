@@ -36,7 +36,10 @@
   <!-- Logo Icon -->
   <g transform="translate(568, 85)">
     <rect width="64" height="64" rx="16" fill="url(#primaryGrad)"/>
-    <path d="M36 18L22 34H32L28 46L42 30H32L36 18Z" fill="#ffffff"/>
+    <path d="M32 14V36M32 36L22 26M32 36L42 26" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M16 20V28" stroke="#bae6fd" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M48 20V28" stroke="#bae6fd" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+    <path d="M16 44H48" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
   </g>
 
   <!-- Main Title -->

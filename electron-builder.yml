@@ -28,7 +28,7 @@ extraResources:
 
 mac:
   category: public.app-category.utilities
-  icon: assets/icon.png
+  icon: assets/icon.icns
   target:
     - target: dmg
       arch:
@@ -45,7 +45,7 @@ dmg:
   artifactName: ADM-${version}-mac-${arch}.${ext}
 
 win:
-  icon: assets/icon.png
+  icon: assets/icon.ico
   target:
     - target: nsis
       arch:

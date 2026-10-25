@@ -68,12 +68,18 @@ export const Sidebar: React.FC = () => {
       <div className="p-4">
         {/* Branding Logo */}
         <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-primary-400 flex items-center justify-center text-white shadow-md shadow-primary-500/20">
-            <Zap className="w-5 h-5 fill-current" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 via-primary-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-primary-500/30 p-1.5">
+            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+              <path d="M20 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
+              <path d="M5 19H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
           </div>
           <div>
-            <h1 className="font-bold text-sm tracking-tight text-surface-900 dark:text-surface-100">
+            <h1 className="font-bold text-sm tracking-tight text-surface-900 dark:text-surface-100 flex items-center gap-1">
               ADM
+              <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">PRO</span>
             </h1>
             <p className="text-[10px] text-surface-500 dark:text-surface-400 font-medium">
               Anything Download Manager

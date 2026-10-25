@@ -5,13 +5,13 @@
   "main": "dist/main/index.js",
   "author": "Naman Rathi <naman@example.com>",
   "license": "MIT",
-  "homepage": "https://namanrathi.github.io/anything-download-manager",
+  "homepage": "https://namanrathi07.github.io/anything-download-manager",
   "repository": {
     "type": "git",
-    "url": "https://github.com/namanrathi/anything-download-manager.git"
+    "url": "https://github.com/namanrathi07/anything-download-manager.git"
   },
   "bugs": {
-    "url": "https://github.com/namanrathi/anything-download-manager/issues"
+    "url": "https://github.com/namanrathi07/anything-download-manager/issues"
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
