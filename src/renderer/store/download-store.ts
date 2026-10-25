@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { create } from 'zustand';
-import type { DownloadTask, DownloadProgress, TorrentTask, DownloadCategory } from '../../shared/types';
+import type { DownloadTask, DownloadProgress, TorrentTask, DownloadCategory, UpdateCheckResult } from '../../shared/types';
 
 export type StatusFilter = 'all' | 'downloading' | 'completed' | 'paused' | 'failed' | 'torrents' | DownloadCategory;
 
@@ -19,6 +19,11 @@ interface DownloadState {
   isSettingsOpen: boolean;
   isAboutOpen: boolean;
   isReportIssueOpen: boolean;
+
+  // Version and Update Management
+  appVersion: string;
+  updateInfo: UpdateCheckResult | null;
+  isCheckingUpdate: boolean;
 
   // Actions
   setDownloads: (downloads: DownloadTask[]) => void;
@@ -43,6 +48,11 @@ interface DownloadState {
   setIsSettingsOpen: (open: boolean) => void;
   setIsAboutOpen: (open: boolean) => void;
   setIsReportIssueOpen: (open: boolean) => void;
+
+  setAppVersion: (version: string) => void;
+  setUpdateInfo: (info: UpdateCheckResult | null) => void;
+  setIsCheckingUpdate: (checking: boolean) => void;
+  checkForUpdates: () => Promise<UpdateCheckResult | null>;
 }
 
 export const useDownloadStore = create<DownloadState>((set, get) => ({
@@ -57,6 +67,10 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
   isSettingsOpen: false,
   isAboutOpen: false,
   isReportIssueOpen: false,
+
+  appVersion: '1.0.0',
+  updateInfo: null,
+  isCheckingUpdate: false,
 
   setDownloads: (downloads) => set({ downloads }),
 
@@ -144,4 +158,27 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
   setIsSettingsOpen: (open) => set({ isSettingsOpen: open }),
   setIsAboutOpen: (open) => set({ isAboutOpen: open }),
   setIsReportIssueOpen: (open) => set({ isReportIssueOpen: open }),
+
+  setAppVersion: (version) => set({ appVersion: version }),
+  setUpdateInfo: (info) => set({ updateInfo: info }),
+  setIsCheckingUpdate: (checking) => set({ isCheckingUpdate: checking }),
+
+  checkForUpdates: async () => {
+    if (!window.electronAPI?.checkForUpdates) return null;
+    set({ isCheckingUpdate: true });
+    try {
+      const result = await window.electronAPI.checkForUpdates();
+      if (result) {
+        set({
+          updateInfo: result,
+          appVersion: result.currentVersion || get().appVersion,
+        });
+      }
+      return result;
+    } catch {
+      return null;
+    } finally {
+      set({ isCheckingUpdate: false });
+    }
+  },
 }));

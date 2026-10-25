@@ -62,6 +62,7 @@ export const IPC = {
   APP_CLOSE_POPUP: 'app:close-popup',
   APP_OPEN_EXTERNAL: 'app:open-external',
   APP_GET_SYSTEM_INFO: 'app:get-system-info',
+  APP_CHECK_FOR_UPDATES: 'app:check-for-updates',
 
   // ─── Statistics ─────────────────────────────────────────────────────────
   STATS_GET: 'stats:get',

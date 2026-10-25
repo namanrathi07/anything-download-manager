@@ -20,10 +20,20 @@ export function useDownloads() {
     removeDownload,
     setTorrents,
     upsertTorrent,
+    setAppVersion,
+    checkForUpdates,
   } = useDownloadStore();
 
   useEffect(() => {
     if (!window.electronAPI) return;
+
+    window.electronAPI.getVersion().then((v) => {
+      if (v) setAppVersion(v);
+    });
+
+    const updateTimer = setTimeout(() => {
+      checkForUpdates();
+    }, 2500);
 
     // Load initial tasks
     window.electronAPI.getAllDownloads().then((list) => {
@@ -63,6 +73,7 @@ export function useDownloads() {
     });
 
     return () => {
+      clearTimeout(updateTimer);
       unbindProgress();
       unbindAdded();
       unbindStatus();

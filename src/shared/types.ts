@@ -228,3 +228,19 @@ export interface DownloadStats {
   totalDownloadedBytes: number;
   averageSpeed: number;
 }
+
+// ─── Updates & Releases ─────────────────────────────────────────────────────
+
+export interface UpdateCheckResult {
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseName: string;
+  releaseUrl: string;
+  releaseNotes: string;
+  publishedAt: string;
+  downloadUrl?: string;
+  downloadFileName?: string;
+  downloadSize?: number;
+  error?: string;
+}

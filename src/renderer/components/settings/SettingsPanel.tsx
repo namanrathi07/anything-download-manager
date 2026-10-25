@@ -3,12 +3,19 @@
 // ============================================================================
 
 import React from 'react';
-import { X, Folder, Shield, Globe, HardDrive, Sliders } from 'lucide-react';
+import { X, Folder, Shield, Globe, HardDrive, Sliders, RefreshCw, Sparkles, ExternalLink } from 'lucide-react';
 import { useDownloadStore } from '../../store/download-store';
 import { useSettings } from '../../hooks/useSettings';
 
 export const SettingsPanel: React.FC = () => {
-  const { isSettingsOpen, setIsSettingsOpen } = useDownloadStore();
+  const {
+    isSettingsOpen,
+    setIsSettingsOpen,
+    appVersion,
+    updateInfo,
+    isCheckingUpdate,
+    checkForUpdates,
+  } = useDownloadStore();
   const { settings, updateSettings } = useSettings();
 
   if (!isSettingsOpen || !settings) return null;
@@ -188,6 +195,52 @@ export const SettingsPanel: React.FC = () => {
                 />
                 Enable Peer Exchange (PEX)
               </label>
+            </div>
+          </section>
+
+          {/* Software Updates & Version */}
+          <section className="space-y-3 pt-2 border-t border-surface-200 dark:border-surface-800">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-primary-500 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4" />
+              App Version & Release Updates
+            </h4>
+
+            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-800 text-xs">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-surface-900 dark:text-surface-100">
+                    Installed Version: v{appVersion}
+                  </span>
+                  {updateInfo?.hasUpdate && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      Update v{updateInfo.latestVersion} Available
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-surface-500 dark:text-surface-400">
+                  ADM checks GitHub for new production releases and updates.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => checkForUpdates()}
+                  disabled={isCheckingUpdate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-200 dark:bg-surface-800 hover:bg-surface-300 dark:hover:bg-surface-700 text-xs font-medium text-surface-700 dark:text-surface-300 transition disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin text-primary-400' : ''}`} />
+                  <span>{isCheckingUpdate ? 'Checking...' : 'Check Now'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.electronAPI?.openExternal('https://github.com/namanrathi07/anything-download-manager/releases')}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-primary-400 hover:underline"
+                >
+                  <span>Releases</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </section>
         </div>

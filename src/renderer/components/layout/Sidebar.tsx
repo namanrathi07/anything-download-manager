@@ -32,6 +32,8 @@ export const Sidebar: React.FC = () => {
     setIsSettingsOpen,
     setIsAboutOpen,
     setIsReportIssueOpen,
+    appVersion,
+    updateInfo,
   } = useDownloadStore();
 
   const getCount = (filter: StatusFilter): number => {
@@ -77,13 +79,26 @@ export const Sidebar: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h1 className="font-bold text-sm tracking-tight text-surface-900 dark:text-surface-100 flex items-center gap-1">
+            <h1 className="font-bold text-sm tracking-tight text-surface-900 dark:text-surface-100 flex items-center gap-1.5">
               ADM
               <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">PRO</span>
+              <span className="text-[10px] text-surface-500 dark:text-surface-400 font-mono">v{appVersion}</span>
             </h1>
-            <p className="text-[10px] text-surface-500 dark:text-surface-400 font-medium">
-              Anything Download Manager
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-[10px] text-surface-500 dark:text-surface-400 font-medium">
+                Anything Download Manager
+              </p>
+              {updateInfo?.hasUpdate && (
+                <button
+                  onClick={() => setIsAboutOpen(true)}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse hover:bg-emerald-500/30 transition cursor-pointer"
+                  title={`Update v${updateInfo.latestVersion} available! Click to view.`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  New
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -166,6 +181,18 @@ export const Sidebar: React.FC = () => {
 
       {/* Sidebar Footer Controls */}
       <div className="p-3 border-t border-surface-200 dark:border-surface-800 space-y-1">
+        {updateInfo?.hasUpdate && (
+          <button
+            onClick={() => setIsAboutOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition shadow-sm mb-1.5 animate-pulse"
+          >
+            <div className="flex items-center gap-2">
+              <ArrowDownCircle className="w-4 h-4 text-emerald-400" />
+              <span>Update Ready ({updateInfo.latestVersion})</span>
+            </div>
+          </button>
+        )}
+
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg text-surface-600 dark:text-surface-400 hover:bg-surface-200/60 dark:hover:bg-surface-900/60 transition"

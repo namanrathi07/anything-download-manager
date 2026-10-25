@@ -4,7 +4,7 @@
   "short_name": "ADM",
   "version": "1.0.0",
   "description": "Integrate your browser with ADM for accelerated downloads",
-  "homepage_url": "https://github.com/AnyDownloadManager/ADM",
+  "homepage_url": "https://github.com/namanrathi07/anything-download-manager",
 
   "permissions": [
     "downloads",

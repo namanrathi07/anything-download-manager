@@ -5,6 +5,7 @@
 import http from 'http';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
+import { app } from 'electron';
 import { WEBSOCKET_PORT } from '../shared/constants';
 import type { BrowserDownloadMessage } from '../shared/types';
 
@@ -56,7 +57,7 @@ export class NativeMessagingHost extends EventEmitter {
       // Health check endpoint
       if (req.url === '/ping') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'adm-running', version: '1.0.0' }));
+        res.end(JSON.stringify({ status: 'adm-running', version: app.getVersion() || '1.0.0' }));
         return;
       }
 

@@ -2,7 +2,7 @@
 // Anything Download Manager — About Modal Component
 // ============================================================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Zap,
@@ -13,16 +13,35 @@ import {
   ExternalLink,
   Code2,
   Terminal,
+  RefreshCw,
+  Download,
+  CheckCircle2,
+  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useDownloadStore } from '../../store/download-store';
 
 export const AboutModal: React.FC = () => {
-  const { isAboutOpen, setIsAboutOpen } = useDownloadStore();
+  const {
+    isAboutOpen,
+    setIsAboutOpen,
+    appVersion,
+    updateInfo,
+    isCheckingUpdate,
+    checkForUpdates,
+  } = useDownloadStore();
+
+  const [hasCheckedManually, setHasCheckedManually] = useState(false);
 
   if (!isAboutOpen) return null;
 
   const openLink = (url: string) => {
     window.electronAPI?.openExternal(url);
+  };
+
+  const handleCheckUpdate = async () => {
+    setHasCheckedManually(true);
+    await checkForUpdates();
   };
 
   return (
@@ -40,11 +59,14 @@ export const AboutModal: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-sm text-surface-900 dark:text-surface-100">
+              <h3 className="font-bold text-sm text-surface-900 dark:text-surface-100 flex items-center gap-2">
                 Anything Download Manager
+                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">
+                  v{appVersion}
+                </span>
               </h3>
               <p className="text-[11px] text-surface-500 dark:text-surface-400">
-                Version 1.0.0 (Production Release)
+                Official Production Release • Cross-Platform Engine
               </p>
             </div>
           </div>
@@ -58,6 +80,79 @@ export const AboutModal: React.FC = () => {
 
         {/* Content */}
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh] scrollbar-thin">
+          {/* Release & Update Status Card */}
+          <div className="p-4 rounded-xl bg-surface-50 dark:bg-surface-950/80 border border-surface-200 dark:border-surface-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary-400" />
+                <span className="text-xs font-bold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+                  Release Version Status
+                </span>
+              </div>
+              <button
+                onClick={handleCheckUpdate}
+                disabled={isCheckingUpdate}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-surface-200 dark:bg-surface-800 hover:bg-surface-300 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 transition disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isCheckingUpdate ? 'animate-spin text-primary-400' : ''}`} />
+                <span>{isCheckingUpdate ? 'Checking...' : 'Check for Updates'}</span>
+              </button>
+            </div>
+
+            {updateInfo?.hasUpdate ? (
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>New Version Available: <strong>{updateInfo.latestVersion}</strong></span>
+                  </div>
+                  <span className="text-[10px] text-surface-400">
+                    Current: v{appVersion}
+                  </span>
+                </div>
+                {updateInfo.releaseName && (
+                  <p className="text-[11px] text-surface-300 font-medium">
+                    {updateInfo.releaseName}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 pt-1">
+                  {updateInfo.downloadUrl && (
+                    <button
+                      onClick={() => openLink(updateInfo.downloadUrl!)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download {updateInfo.latestVersion}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => openLink(updateInfo.releaseUrl)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white text-xs font-medium transition border border-surface-700"
+                  >
+                    <span>Release Notes</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : hasCheckedManually && updateInfo ? (
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>You are on the latest version (v{appVersion}). No new updates available.</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400">
+                <span>Installed Version: <strong>v{appVersion}</strong></span>
+                <button
+                  onClick={() => openLink('https://github.com/namanrathi07/anything-download-manager/releases')}
+                  className="text-primary-400 hover:underline flex items-center gap-1 text-[11px]"
+                >
+                  <span>All Versions History</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Creator & Lead Developer Spotlight */}
           <div className="p-4 rounded-xl bg-gradient-to-r from-primary-950/40 via-surface-900 to-surface-950 border border-primary-500/30 flex items-center justify-between">
             <div className="space-y-1">
@@ -110,10 +205,10 @@ export const AboutModal: React.FC = () => {
               <div className="p-3 bg-surface-50 dark:bg-surface-950/70 border border-surface-200 dark:border-surface-800 rounded-lg">
                 <div className="font-semibold text-surface-800 dark:text-surface-200 flex items-center gap-1.5 mb-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-                  SQLite + JSON Persistence
+                  Zero-Native Resilient Store
                 </div>
                 <p className="text-[11px] text-surface-500 dark:text-surface-400 leading-relaxed">
-                  Embedded ACID-compliant SQLite with automatic fallback to JSON store, keeping segments safe across reboots on all OSes.
+                  Pure atomic JSON persistence engine eliminating any missing .dll or MSVC runtime requirements on all OSs.
                 </p>
               </div>
 
@@ -135,7 +230,7 @@ export const AboutModal: React.FC = () => {
               Universal Cross-Platform Architecture
             </span>
             <p className="text-[11px] text-surface-500 dark:text-surface-400">
-              Built from scratch to run seamlessly on Windows (x64, ia32), macOS (Apple Silicon M-series & Intel Universal), and Linux (AppImage, deb, rpm).
+              Built from scratch to run seamlessly on Windows (x64), macOS (Apple Silicon M-series & Intel Universal), and Linux (AppImage & deb).
             </p>
           </div>
         </div>

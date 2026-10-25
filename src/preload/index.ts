@@ -14,6 +14,7 @@ import type {
   AppSettings,
   UrlInfo,
   DownloadStats,
+  UpdateCheckResult,
 } from '../shared/types';
 
 // Type-safe API exposed to the renderer
@@ -100,6 +101,7 @@ const electronAPI = {
   closePopup: (): void => ipcRenderer.send(IPC.APP_CLOSE_POPUP),
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IPC.APP_OPEN_EXTERNAL, url),
   getSystemInfo: (): Promise<Record<string, string>> => ipcRenderer.invoke(IPC.APP_GET_SYSTEM_INFO),
+  checkForUpdates: (): Promise<UpdateCheckResult> => ipcRenderer.invoke(IPC.APP_CHECK_FOR_UPDATES),
 
   // ─── Statistics ─────────────────────────────────────────────────────────
   getStats: (): Promise<DownloadStats> => ipcRenderer.invoke(IPC.STATS_GET),

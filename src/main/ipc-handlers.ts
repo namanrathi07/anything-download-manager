@@ -4,6 +4,7 @@
 
 import { ipcMain, dialog, shell, app, BrowserWindow } from 'electron';
 import path from 'path';
+import https from 'https';
 import { IPC } from '../shared/ipc-channels';
 import type { DownloadManager } from './download/download-manager';
 import type { TorrentManager } from './torrent/torrent-manager';
@@ -11,7 +12,7 @@ import type { AppDatabase } from './database/database';
 import type { WindowManager } from './window-manager';
 import { UrlResolver } from './download/url-resolver';
 import { getPlatform, getDefaultDownloadPath } from './utils/platform-utils';
-import type { AppSettings, NewDownloadRequest } from '../shared/types';
+import type { AppSettings, NewDownloadRequest, UpdateCheckResult } from '../shared/types';
 import {
   DEFAULT_MAX_CONCURRENT,
   DEFAULT_SEGMENT_COUNT,
@@ -324,5 +325,129 @@ export function registerIPCHandlers(
       totalMemory: `${Math.round(os.totalmem() / (1024 * 1024 * 1024))} GB`,
       freeMemory: `${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB`,
     };
+  });
+
+  ipcMain.handle(IPC.APP_CHECK_FOR_UPDATES, async (): Promise<UpdateCheckResult> => {
+    const currentVersion = app.getVersion() || '1.0.0';
+    try {
+      const releaseData = await new Promise<any>((resolve, reject) => {
+        const req = https.get(
+          'https://api.github.com/repos/namanrathi07/anything-download-manager/releases/latest',
+          {
+            headers: {
+              'User-Agent': 'Anything-Download-Manager',
+              Accept: 'application/vnd.github.v3+json',
+            },
+            timeout: 10000,
+          },
+          (res) => {
+            if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+              https
+                .get(
+                  res.headers.location,
+                  { headers: { 'User-Agent': 'Anything-Download-Manager' } },
+                  (redirRes) => {
+                    let data = '';
+                    redirRes.on('data', (chunk) => (data += chunk));
+                    redirRes.on('end', () => {
+                      try {
+                        resolve(JSON.parse(data));
+                      } catch (e) {
+                        reject(e);
+                      }
+                    });
+                  }
+                )
+                .on('error', reject);
+              return;
+            }
+
+            if (res.statusCode !== 200) {
+              return reject(new Error(`GitHub API returned status ${res.statusCode}`));
+            }
+
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+              try {
+                resolve(JSON.parse(data));
+              } catch (e) {
+                reject(e);
+              }
+            });
+          }
+        );
+
+        req.on('error', reject);
+        req.on('timeout', () => {
+          req.destroy(new Error('Update check request timed out'));
+        });
+      });
+
+      const latestTag = releaseData.tag_name || '';
+      const cleanCurrent = currentVersion.replace(/^v/, '');
+      const cleanLatest = latestTag.replace(/^v/, '');
+
+      const isNewer = (curr: string, lat: string) => {
+        const cParts = curr.split('.').map((n) => parseInt(n, 10) || 0);
+        const lParts = lat.split('.').map((n) => parseInt(n, 10) || 0);
+        for (let i = 0; i < Math.max(cParts.length, lParts.length); i++) {
+          const c = cParts[i] || 0;
+          const l = lParts[i] || 0;
+          if (l > c) return true;
+          if (l < c) return false;
+        }
+        return false;
+      };
+
+      const hasUpdate = isNewer(cleanCurrent, cleanLatest);
+
+      // Find matching asset for user's platform
+      const assets: Array<{ name: string; browser_download_url: string; size: number }> =
+        releaseData.assets || [];
+
+      let matchingAsset: { name: string; browser_download_url: string; size: number } | undefined;
+      const platform = process.platform;
+      const arch = process.arch;
+
+      if (platform === 'win32') {
+        matchingAsset = assets.find((a) => a.name.endsWith('.exe'));
+      } else if (platform === 'darwin') {
+        if (arch === 'arm64') {
+          matchingAsset = assets.find((a) => a.name.includes('arm64.dmg') || a.name.includes('arm64'));
+        } else {
+          matchingAsset = assets.find((a) => a.name.includes('x64.dmg') || a.name.includes('x64'));
+        }
+        if (!matchingAsset) matchingAsset = assets.find((a) => a.name.endsWith('.dmg'));
+      } else if (platform === 'linux') {
+        matchingAsset = assets.find((a) => a.name.endsWith('.AppImage') || a.name.endsWith('.deb'));
+      }
+
+      return {
+        hasUpdate,
+        currentVersion,
+        latestVersion: latestTag || currentVersion,
+        releaseName: releaseData.name || latestTag,
+        releaseUrl:
+          releaseData.html_url ||
+          'https://github.com/namanrathi07/anything-download-manager/releases/latest',
+        releaseNotes: releaseData.body || '',
+        publishedAt: releaseData.published_at || '',
+        downloadUrl: matchingAsset?.browser_download_url || releaseData.html_url,
+        downloadFileName: matchingAsset?.name,
+        downloadSize: matchingAsset?.size,
+      };
+    } catch (err: any) {
+      return {
+        hasUpdate: false,
+        currentVersion,
+        latestVersion: currentVersion,
+        releaseName: `v${currentVersion}`,
+        releaseUrl: 'https://github.com/namanrathi07/anything-download-manager/releases/latest',
+        releaseNotes: '',
+        publishedAt: '',
+        error: err.message,
+      };
+    }
   });
 }
