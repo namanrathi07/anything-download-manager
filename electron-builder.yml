@@ -6,12 +6,11 @@ directories:
   output: release
   buildResources: assets
 
-npmRebuild: true
+npmRebuild: false
 nodeGypRebuild: false
 asar: true
 asarUnpack:
   - "**/*.node"
-  - "**/better-sqlite3/**"
 
 files:
   - dist/**/*
@@ -85,11 +84,3 @@ appImage:
 
 deb:
   artifactName: ADM-${version}-linux-${arch}.${ext}
-  depends:
-    - gconf2
-    - gconf-service
-    - libnotify4
-    - libappindicator1
-    - libxtst6
-    - libnss3
-    - libasound2

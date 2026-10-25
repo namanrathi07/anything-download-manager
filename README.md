@@ -51,9 +51,8 @@ Unlike proprietary download tools limited to Windows or locked behind paid trial
 
 - **Multi-Stream HTTP Range Engine**: Partitions remote files into dynamically balanced chunks downloaded simultaneously via HTTP `Range: bytes=X-Y` requests.
 - **Fail-Safe Dependency Packaging**:
-  - `better-sqlite3` native binaries are unpackaged from ASAR (`asarUnpack`) to ensure dynamic libraries load flawlessly.
-  - Built-in automatic fallback to a resilient JSON persistence store (`adm_data.json`) if C++ runtime or native libraries are missing on barebones environments.
-  - Multi-arch installers for Windows (`x64`, `ia32`), macOS (Apple Silicon `arm64` & Intel Universal `x64`), and Linux (`AppImage`, `deb`, `rpm`).
+  - Resilient, zero-native cross-platform persistence store (`adm_data.json`) eliminating any missing `.dll` or Visual C++ runtime (`vcruntime140.dll`) errors on Windows.
+  - Multi-arch installers for Windows (`x64`), macOS (Apple Silicon `arm64` & Intel Universal `x64`), and Linux (`AppImage`, `deb`).
 - **Universal WebExtension (Manifest V3)**:
   - Hooks `chrome.downloads` to cancel native downloads and forward the request to ADM.
   - Injects hover action pills over download links (`.zip`, `.iso`, `.exe`, `.mp4`).

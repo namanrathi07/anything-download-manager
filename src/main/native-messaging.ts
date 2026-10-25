@@ -5,8 +5,8 @@
 import http from 'http';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
-import { WEBSOCKET_PORT } from '../../shared/constants';
-import type { BrowserDownloadMessage } from '../../shared/types';
+import { WEBSOCKET_PORT } from '../shared/constants';
+import type { BrowserDownloadMessage } from '../shared/types';
 
 export class NativeMessagingHost extends EventEmitter {
   private server: http.Server | null = null;
