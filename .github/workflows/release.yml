@@ -42,13 +42,11 @@ jobs:
       - name: Install System Build Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libarchive-tools libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2 zip
+          sudo apt-get update -y
+          sudo apt-get install -y zip
 
       - name: Install Node Dependencies
-        run: |
-          npm install
-          npx electron-builder install-app-deps
+        run: npm install
 
       - name: Package Universal Browser Extension (Linux runner)
         if: runner.os == 'Linux'
@@ -58,6 +56,7 @@ jobs:
         run: npm run ${{ matrix.npm_script }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload Release Binaries to GitHub Release
         uses: softprops/action-gh-release@v2

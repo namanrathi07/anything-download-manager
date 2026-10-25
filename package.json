@@ -14,7 +14,6 @@
     "url": "https://github.com/namanrathi07/anything-download-manager/issues"
   },
   "scripts": {
-    "postinstall": "electron-builder install-app-deps || true",
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -p tsconfig.main.json --watch",
     "dev:renderer": "vite dev",
