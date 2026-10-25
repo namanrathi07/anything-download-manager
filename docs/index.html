@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anything Download Manager (ADM) — Fast, Free, Open-Source IDM Alternative</title>
+  <meta name="description" content="Open-source cross-platform download manager inspired by IDM. Accelerates downloads with 32 parallel streams, browser auto-detection popup, and BitTorrent support on Windows, macOS, and Linux." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    .hero-glow {
+      background: radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.22) 0%, transparent 70%);
+    }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-50 bg-dark-950/80 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-brand-500/25">
+          ⚡
+        </div>
+        <div>
+          <span class="font-extrabold text-base tracking-tight text-white">Anything Download Manager</span>
+          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">v1.0.0</span>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+        <a href="#features" class="hover:text-white transition">Features</a>
+        <a href="#comparison" class="hover:text-white transition">Why ADM?</a>
+        <a href="#architecture" class="hover:text-white transition">Architecture</a>
+        <a href="#download" class="hover:text-white transition">Downloads</a>
+        <a href="#extension" class="hover:text-white transition">Browser Extension</a>
+        <a href="#developer" class="hover:text-white transition">Creator</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/namanrathi/anything-download-manager" target="_blank" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative pt-20 pb-28 overflow-hidden hero-glow">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold mb-6">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        100% Free & Open Source • No Subscriptions • No Trial Limits
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight mb-6">
+        The IDM-Speed Download Manager<br />
+        <span class="bg-gradient-to-r from-brand-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+          For Windows, macOS & Linux
+        </span>
+      </h1>
+
+      <p class="max-w-2xl mx-auto text-lg text-slate-400 font-normal mb-10 leading-relaxed">
+        Accelerate downloads by up to <strong class="text-white">500%</strong> with up to <strong class="text-white">32 parallel chunk streams</strong>. Features auto-detection popups for all major web browsers, video stream capture, and native BitTorrent support.
+      </p>
+
+      <!-- Primary Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-4 mb-14" id="download">
+        <a href="#download-options" class="px-6 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm shadow-xl shadow-brand-500/30 transition flex items-center gap-2">
+          <span>⬇ Download ADM Desktop App</span>
+        </a>
+        <a href="#extension" class="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition flex items-center gap-2">
+          <span>🧩 Get Browser Extension</span>
+        </a>
+      </div>
+
+      <!-- OS Support Badges -->
+      <div class="flex items-center justify-center gap-6 text-xs text-slate-400">
+        <div class="flex items-center gap-1.5 font-medium"><span>🪟</span> Windows 10/11 (.exe)</div>
+        <div class="flex items-center gap-1.5 font-medium"><span>🍎</span> macOS Apple Silicon & Intel (.dmg)</div>
+        <div class="flex items-center gap-1.5 font-medium"><span>🐧</span> Linux AppImage / deb / rpm</div>
+      </div>
+
+      <!-- Hero Visual Mockup Preview -->
+      <div class="mt-14 relative rounded-2xl p-2 bg-gradient-to-b from-slate-700/50 to-slate-900/50 border border-slate-800 shadow-2xl">
+        <img src="../assets/adm-preview.svg" alt="Anything Download Manager Interface Preview" class="w-full rounded-xl shadow-2xl" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section: Why ADM? -->
+  <section id="comparison" class="py-24 bg-dark-900 border-y border-slate-800">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-brand-400 mb-2">Honest Comparison</h2>
+        <h3 class="text-3xl font-extrabold text-white">Why Anything Download Manager?</h3>
+        <p class="text-sm text-slate-400 mt-2">Compare ADM side-by-side with commercial IDM and default browser downloaders.</p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400">
+              <th class="py-4 px-6 font-semibold">Feature</th>
+              <th class="py-4 px-6 font-bold text-brand-400 text-base">⚡ Anything Download Manager (ADM)</th>
+              <th class="py-4 px-6 font-semibold">Internet Download Manager (IDM)</th>
+              <th class="py-4 px-6 font-semibold">Browser Default Downloader</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr>
+              <td class="py-4 px-6 font-medium">Price & License</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">100% Free & Open Source (MIT)</td>
+              <td class="py-4 px-6 text-red-400">$24.95 / year (Commercial)</td>
+              <td class="py-4 px-6 text-slate-400">Free</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">Operating Systems</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Windows, macOS & Linux</td>
+              <td class="py-4 px-6 text-amber-400">Windows Only</td>
+              <td class="py-4 px-6 text-emerald-400">Windows, macOS, Linux</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">Multi-Stream Acceleration</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Up to 32 Parallel Connections</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Up to 32 Parallel Connections</td>
+              <td class="py-4 px-6 text-red-400">Single Connection (1 stream)</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">Browser Auto-Detect Popup</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Instant IDM Popup on all Browsers</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Yes (Windows browsers only)</td>
+              <td class="py-4 px-6 text-slate-400">Basic bottom shelf / flyout</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">BitTorrent & Magnet Support</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Built-in WebTorrent Client</td>
+              <td class="py-4 px-6 text-red-400">No (HTTP/FTP only)</td>
+              <td class="py-4 px-6 text-red-400">No</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">Video Stream Sniffer</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">On-screen HTML5 Video overlay</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Yes</td>
+              <td class="py-4 px-6 text-red-400">No</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 font-medium">User Interface</td>
+              <td class="py-4 px-6 text-emerald-400 font-bold">Modern React 19 Dark Aesthetic</td>
+              <td class="py-4 px-6 text-slate-400">Legacy Windows 98/XP skin</td>
+              <td class="py-4 px-6 text-slate-400">Standard browser UI</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="py-24 bg-dark-950">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-brand-400 mb-2">High Performance</h2>
+        <h3 class="text-3xl font-extrabold text-white">Engineered for Maximum Speed</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">⚡</div>
+          <h4 class="text-base font-bold text-white mb-2">Dynamic Multi-Segmenting</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Files are sliced into up to 32 parallel chunks downloaded simultaneously via HTTP Range headers, maxing out your internet pipeline.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🪟</div>
+          <h4 class="text-base font-bold text-white mb-2">Instant Download Popups</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Clicking any download link on Chrome, Firefox, Edge, or Brave automatically summons the IDM download popup with filename, size, and destination.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🧲</div>
+          <h4 class="text-base font-bold text-white mb-2">Torrent & Magnet Downloads</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            No need for separate torrent software. ADM downloads .torrent files and magnet links with real-time peer monitoring and seeding controls.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🎬</div>
+          <h4 class="text-base font-bold text-white mb-2">Web Video Sniffer</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Detects video playback on web pages and displays a one-click "Download Video" pill over HTML5 players.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">💾</div>
+          <h4 class="text-base font-bold text-white mb-2">Reliable Pause & Resume</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Powered by embedded SQLite with JSON fallback, every chunk offset is persisted safely so interrupted downloads resume instantly.
+          </p>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl">
+          <div class="text-3xl mb-4">📦</div>
+          <h4 class="text-base font-bold text-white mb-2">No Missing DLL Errors</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Engineered with unpacked native binaries, static fallbacks, and multi-arch bundles so Windows, macOS, and Linux run out of the box.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section id="download-options" class="py-24 bg-dark-900 border-t border-slate-800">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-brand-400 mb-2">Get Started</h2>
+      <h3 class="text-3xl font-extrabold text-white mb-4">Download ADM for Your System</h3>
+      <p class="text-sm text-slate-400 max-w-lg mx-auto mb-12">
+        Choose your platform below or download the latest standalone binaries directly from GitHub Releases.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        <!-- Windows -->
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-t-2 border-t-brand-500">
+          <div>
+            <div class="text-2xl mb-2">🪟 Windows</div>
+            <h4 class="font-bold text-white text-base">Windows 10 / 11</h4>
+            <p class="text-xs text-slate-400 mt-1 mb-4">64-bit & 32-bit NSIS installer with desktop shortcut and portable edition.</p>
+          </div>
+          <div class="space-y-2">
+            <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-3 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition">
+              Download Installer (.exe)
+            </a>
+            <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+              Portable Edition (.exe)
+            </a>
+          </div>
+        </div>
+
+        <!-- macOS -->
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-t-2 border-t-sky-500">
+          <div>
+            <div class="text-2xl mb-2">🍎 macOS</div>
+            <h4 class="font-bold text-white text-base">macOS 12+ (Universal)</h4>
+            <p class="text-xs text-slate-400 mt-1 mb-4">Apple Silicon (M1/M2/M3/M4) & Intel 64-bit DMG package.</p>
+          </div>
+          <div class="space-y-2">
+            <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
+              Download DMG (.dmg)
+            </a>
+            <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+              ZIP Package (.zip)
+            </a>
+          </div>
+        </div>
+
+        <!-- Linux -->
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-t-2 border-t-emerald-500">
+          <div>
+            <div class="text-2xl mb-2">🐧 Linux</div>
+            <h4 class="font-bold text-white text-base">Ubuntu, Debian, Fedora, Arch</h4>
+            <p class="text-xs text-slate-400 mt-1 mb-4">Standalone AppImage, Debian package (.deb), and Red Hat (.rpm).</p>
+          </div>
+          <div class="space-y-2">
+            <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+              Download AppImage
+            </a>
+            <div class="grid grid-cols-2 gap-2">
+              <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                .deb package
+              </a>
+              <a href="https://github.com/namanrathi/anything-download-manager/releases/latest" class="block text-center py-2 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">
+                .rpm package
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Browser Extension Guide -->
+  <section id="extension" class="py-24 bg-dark-950">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-brand-400 mb-2">Universal Extension</h2>
+        <h3 class="text-3xl font-extrabold text-white">Browser Integration Guide</h3>
+        <p class="text-sm text-slate-400 mt-2">Connect Chrome, Firefox, Edge, Brave, or Opera in under 30 seconds.</p>
+      </div>
+
+      <div class="glass-card p-8 rounded-2xl space-y-6">
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold shrink-0">1</div>
+          <div>
+            <h4 class="text-sm font-bold text-white">Open Browser Extension Manager</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Navigate to <code class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">chrome://extensions</code> in Chrome/Brave/Edge or <code class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">about:debugging</code> in Firefox.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold shrink-0">2</div>
+          <div>
+            <h4 class="text-sm font-bold text-white">Enable Developer Mode</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Toggle the Developer mode switch in the top-right corner of the extensions tab.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold shrink-0">3</div>
+          <div>
+            <h4 class="text-sm font-bold text-white">Load Unpacked</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Click <strong>Load unpacked</strong> and select the <code class="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">browser-extension</code> folder inside the ADM folder.</p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-brand-950/40 border border-brand-500/30 rounded-xl text-xs text-brand-200 flex items-center gap-3">
+          <span class="text-lg">⚡</span>
+          <span>The extension automatically pairs with ADM's local service at <code class="font-mono font-bold">127.0.0.1:28370</code>. No configuration required!</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Developer Spotlight -->
+  <section id="developer" class="py-20 bg-dark-900 border-t border-slate-800">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-3xl font-black text-white mx-auto mb-4 shadow-xl shadow-brand-500/20">
+        NR
+      </div>
+      <h3 class="text-2xl font-bold text-white">Naman Rathi</h3>
+      <p class="text-xs text-brand-400 font-semibold tracking-wide uppercase mt-1 mb-3">Creator & Lead Architect</p>
+      <p class="text-sm text-slate-400 max-w-xl mx-auto leading-relaxed mb-6">
+        Created Anything Download Manager to give developers and users across Windows, macOS, and Linux a truly open, unrestricted, high-speed download manager free from commercials, crack tools, or trial expirations.
+      </p>
+
+      <div class="flex items-center justify-center gap-3">
+        <a href="https://github.com/namanrathi" target="_blank" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <span>GitHub Profile</span>
+        </a>
+        <a href="https://github.com/namanrathi/anything-download-manager/issues" target="_blank" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition flex items-center gap-1.5">
+          <span>Report Issue</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-10 bg-dark-950 border-t border-slate-800 text-center text-xs text-slate-500">
+    <p>Anything Download Manager (ADM) • Designed & Developed by Naman Rathi • Released under MIT License</p>
+    <p class="mt-2 text-slate-600">Cross-Platform Open Source Software for Windows, macOS & Linux</p>
+  </footer>
+
+</body>
+</html>

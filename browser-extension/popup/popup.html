@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <div class="logo">
+        <span class="icon">⚡</span>
+        <h3>Anything Download Manager</h3>
+      </div>
+      <div id="status-indicator" class="status-badge disconnected">Offline</div>
+    </div>
+
+    <div class="toggle-section">
+      <label class="switch">
+        <input type="checkbox" id="intercept-toggle" checked />
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">Auto-intercept browser downloads</span>
+    </div>
+
+    <div class="quick-download">
+      <input type="text" id="url-input" placeholder="Paste link to download..." />
+      <button id="download-btn">Send to ADM</button>
+    </div>
+
+    <div class="footer">
+      <span>ADM v1.0.0 • Multi-stream Engine</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

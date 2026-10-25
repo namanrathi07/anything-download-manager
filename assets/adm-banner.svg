@@ -1,0 +1,65 @@
+<svg width="1200" height="380" viewBox="0 0 1200 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="50%" stop-color="#0b1329"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="380" rx="16" fill="url(#bgGrad)"/>
+  <rect width="1200" height="380" rx="16" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Radial Glow Behind Logo -->
+  <circle cx="600" cy="110" r="140" fill="url(#glowGrad)"/>
+
+  <!-- Top Badge -->
+  <g transform="translate(485, 45)">
+    <rect width="230" height="28" rx="14" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <circle cx="16" cy="14" r="4" fill="#10b981"/>
+    <text x="28" y="18" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="600">OPEN-SOURCE IDM ALTERNATIVE</text>
+  </g>
+
+  <!-- Logo Icon -->
+  <g transform="translate(568, 85)">
+    <rect width="64" height="64" rx="16" fill="url(#primaryGrad)"/>
+    <path d="M36 18L22 34H32L28 46L42 30H32L36 18Z" fill="#ffffff"/>
+  </g>
+
+  <!-- Main Title -->
+  <text x="600" y="200" text-anchor="middle" fill="url(#textGrad)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="38" font-weight="800" letter-spacing="-0.5">Anything Download Manager</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="238" text-anchor="middle" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="16" font-weight="500">Cross-platform accelerated downloads • 32 parallel streams • Browser popup auto-detection • Torrents</text>
+
+  <!-- OS Pills -->
+  <g transform="translate(370, 275)">
+    <!-- Windows -->
+    <rect x="0" y="0" width="130" height="36" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="65" y="22" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="600">🪟 Windows</text>
+
+    <!-- macOS -->
+    <rect x="160" y="0" width="130" height="36" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="225" y="22" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="600">🍎 macOS</text>
+
+    <!-- Linux -->
+    <rect x="320" y="0" width="130" height="36" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="385" y="22" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="13" font-weight="600">🐧 Linux</text>
+  </g>
+
+  <!-- Author Tagline -->
+  <text x="600" y="348" text-anchor="middle" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500">Designed &amp; Developed by Naman Rathi • 100% Free &amp; Open Source (MIT)</text>
+</svg>

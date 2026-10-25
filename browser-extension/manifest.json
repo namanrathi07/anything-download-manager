@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "Anything Download Manager",
+  "short_name": "ADM",
+  "version": "1.0.0",
+  "description": "Integrate your browser with ADM for accelerated downloads",
+  "homepage_url": "https://github.com/AnyDownloadManager/ADM",
+
+  "permissions": [
+    "downloads",
+    "webRequest",
+    "storage",
+    "tabs",
+    "activeTab",
+    "nativeMessaging",
+    "contextMenus",
+    "notifications"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "Anything Download Manager"
+  },
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "minimum_chrome_version": "110"
+}

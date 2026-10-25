@@ -1,0 +1,64 @@
+{
+  "name": "anything-download-manager",
+  "version": "1.0.0",
+  "description": "Open-source cross-platform download manager with multi-segment acceleration, browser integration, and torrent support",
+  "main": "dist/main/index.js",
+  "author": "Naman Rathi <naman@example.com>",
+  "license": "MIT",
+  "homepage": "https://namanrathi.github.io/anything-download-manager",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/namanrathi/anything-download-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/namanrathi/anything-download-manager/issues"
+  },
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "tsc -p tsconfig.main.json --watch",
+    "dev:renderer": "vite dev",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build:extension": "cd browser-extension && npm run build",
+    "start": "electron dist/main/index.js",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "electron-store": "^10.0.0",
+    "uuid": "^11.1.0",
+    "webtorrent": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/webtorrent": "^0.109.8",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.16.0",
+    "postcss": "^8.4.49",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8",
+    "zustand": "^5.0.2",
+    "lucide-react": "^0.468.0",
+    "clsx": "^2.1.1"
+  }
+}

@@ -1,0 +1,226 @@
+<svg width="1100" height="680" viewBox="0 0 1100 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-20" y="-20" width="1140" height="720" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="25" stdDeviation="30" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="popupShadow" x="-10" y="-10" width="460" height="340" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main Window with Drop Shadow -->
+  <g filter="url(#shadow)">
+    <!-- Window Body -->
+    <rect x="20" y="20" width="1060" height="640" rx="14" fill="#020617" stroke="#1e293b" stroke-width="1.5"/>
+
+    <!-- Sidebar (Left) -->
+    <rect x="20" y="20" width="220" height="640" rx="14" fill="#090d1a"/>
+    <line x1="240" y1="20" x2="240" y2="660" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- macOS Traffic Light Window Buttons -->
+    <circle cx="45" cy="45" r="5.5" fill="#ef4444"/>
+    <circle cx="65" cy="45" r="5.5" fill="#f59e0b"/>
+    <circle cx="85" cy="45" r="5.5" fill="#10b981"/>
+
+    <!-- Sidebar App Brand -->
+    <rect x="42" y="75" width="28" height="28" rx="8" fill="#2563eb"/>
+    <path d="M56 81L50 90H55L53 97L61 88H56L58 81Z" fill="#ffffff"/>
+    <text x="78" y="90" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="14" font-weight="700">ADM</text>
+    <text x="78" y="101" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="9" font-weight="500">Anything Download Manager</text>
+
+    <!-- Sidebar Section: Status -->
+    <text x="42" y="135" fill="#475569" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="700" letter-spacing="0.5">STATUS</text>
+
+    <!-- Active Menu: All Downloads -->
+    <rect x="36" y="148" width="188" height="32" rx="6" fill="#2563eb"/>
+    <text x="68" y="168" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="600">All Downloads</text>
+    <rect x="194" y="156" width="20" height="16" rx="8" fill="#1d4ed8"/>
+    <text x="204" y="168" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">8</text>
+
+    <!-- Inactive Menu: Downloading -->
+    <text x="68" y="204" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Downloading</text>
+    <rect x="194" y="192" width="20" height="16" rx="8" fill="#1e293b"/>
+    <text x="204" y="204" text-anchor="middle" fill="#60a5fa" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">2</text>
+
+    <!-- Inactive Menu: Completed -->
+    <text x="68" y="240" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Completed</text>
+    <rect x="194" y="228" width="20" height="16" rx="8" fill="#1e293b"/>
+    <text x="204" y="240" text-anchor="middle" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">6</text>
+
+    <!-- Inactive Menu: Torrents -->
+    <text x="68" y="276" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Torrents (P2P)</text>
+
+    <!-- Sidebar Section: Categories -->
+    <text x="42" y="325" fill="#475569" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="700" letter-spacing="0.5">CATEGORIES</text>
+    <text x="68" y="352" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Videos</text>
+    <text x="68" y="386" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Music &amp; Audio</text>
+    <text x="68" y="420" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Compressed Archives</text>
+    <text x="68" y="454" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Programs / Installers</text>
+    <text x="68" y="488" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="500">Documents</text>
+
+    <!-- Sidebar Footer -->
+    <line x1="20" y1="580" x2="240" y2="580" stroke="#1e293b" stroke-width="1"/>
+    <text x="45" y="605" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="500">⚙️ Preferences</text>
+    <text x="45" y="628" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="600">ℹ️ About ADM (Naman Rathi)</text>
+    <text x="45" y="648" fill="#ef4444" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="500">🐞 Report Issue</text>
+
+    <!-- Header Toolbar -->
+    <rect x="240" y="20" width="840" height="56" fill="url(#headerGrad)"/>
+    <line x1="240" y1="76" x2="1080" y2="76" stroke="#1e293b" stroke-width="1"/>
+
+    <!-- Search input in header -->
+    <rect x="260" y="32" width="280" height="32" rx="6" fill="#090d1a" stroke="#334155" stroke-width="1"/>
+    <text x="290" y="52" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12">Search downloads...</text>
+    <circle cx="275" cy="48" r="4.5" stroke="#64748b" stroke-width="1.2"/>
+    <line x1="278" y1="51" x2="283" y2="56" stroke="#64748b" stroke-width="1.2"/>
+
+    <!-- Header Buttons -->
+    <rect x="880" y="32" width="90" height="32" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="925" y="52" text-anchor="middle" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="600">🧲 Torrent</text>
+
+    <rect x="980" y="32" width="85" height="32" rx="6" fill="#2563eb"/>
+    <text x="1022" y="52" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="600">+ Add URL</text>
+
+    <!-- Download List Item 1: Active Multi-Segment Download -->
+    <g transform="translate(260, 96)">
+      <rect width="800" height="142" rx="10" fill="#0b1329" stroke="#1e3a8a" stroke-width="1.5"/>
+
+      <!-- Icon -->
+      <rect x="16" y="16" width="38" height="38" rx="8" fill="#1e293b"/>
+      <text x="35" y="41" text-anchor="middle" font-size="18">📦</text>
+
+      <!-- Title & Status -->
+      <text x="66" y="32" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="14" font-weight="700">Ubuntu-24.04-desktop-amd64.iso</text>
+      <rect x="360" y="19" width="85" height="18" rx="9" fill="#1e3a8a"/>
+      <text x="402" y="32" text-anchor="middle" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">DOWNLOADING</text>
+
+      <!-- URL -->
+      <text x="66" y="50" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11">https://releases.ubuntu.com/noble/ubuntu-24.04-desktop-amd64.iso</text>
+
+      <!-- Progress Bar (68.4%) -->
+      <rect x="66" y="62" width="650" height="7" rx="3.5" fill="#1e293b"/>
+      <rect x="66" y="62" width="445" height="7" rx="3.5" fill="url(#progressGrad)"/>
+      <text x="730" y="70" fill="#93c5fd" font-family="monospace" font-size="12" font-weight="700">68.4%</text>
+
+      <!-- Meta stats -->
+      <text x="66" y="88" fill="#94a3b8" font-family="monospace" font-size="11">4.02 GB of 5.87 GB</text>
+      <text x="360" y="88" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="700">⚡ 48.6 MB/s</text>
+      <text x="520" y="88" fill="#94a3b8" font-family="monospace" font-size="11">ETA: 38s</text>
+
+      <!-- Segment Visualizer Bar (16 parallel segments) -->
+      <rect x="66" y="98" width="715" height="30" rx="6" fill="#070c18" stroke="#1e293b" stroke-width="1"/>
+      <text x="76" y="110" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="9" font-weight="600">IDM 16 PARALLEL CONNECTIONS</text>
+
+      <!-- 16 Segment Blocks -->
+      <rect x="76" y="115" width="40" height="8" rx="2" fill="#10b981"/>
+      <rect x="120" y="115" width="40" height="8" rx="2" fill="#10b981"/>
+      <rect x="164" y="115" width="40" height="8" rx="2" fill="#10b981"/>
+      <rect x="208" y="115" width="40" height="8" rx="2" fill="#10b981"/>
+      <rect x="252" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="296" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="340" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="384" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="428" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="472" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="516" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="560" y="115" width="40" height="8" rx="2" fill="#f59e0b"/>
+      <rect x="604" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="648" y="115" width="40" height="8" rx="2" fill="#3b82f6"/>
+      <rect x="692" y="115" width="40" height="8" rx="2" fill="#f59e0b"/>
+      <rect x="736" y="115" width="35" height="8" rx="2" fill="#334155"/>
+    </g>
+
+    <!-- Download List Item 2: Completed Video -->
+    <g transform="translate(260, 252)">
+      <rect width="800" height="85" rx="10" fill="#090d1a" stroke="#1e293b" stroke-width="1"/>
+      <rect x="16" y="16" width="38" height="38" rx="8" fill="#1e293b"/>
+      <text x="35" y="41" text-anchor="middle" font-size="18">🎬</text>
+
+      <text x="66" y="32" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="14" font-weight="700">WWDC24_Keynote_4K_ProRes.mp4</text>
+      <rect x="340" y="19" width="75" height="18" rx="9" fill="#064e3b"/>
+      <text x="377" y="32" text-anchor="middle" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">COMPLETED</text>
+
+      <text x="66" y="50" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11">https://developer.apple.com/videos/wwdc2024/keynote.mp4</text>
+
+      <rect x="66" y="62" width="650" height="6" rx="3" fill="#10b981"/>
+      <text x="730" y="69" fill="#34d399" font-family="monospace" font-size="11" font-weight="700">100%</text>
+      <text x="66" y="80" fill="#64748b" font-family="monospace" font-size="10">8.42 GB • Finished in 3m 12s</text>
+    </g>
+
+    <!-- Download List Item 3: Active Torrent -->
+    <g transform="translate(260, 350)">
+      <rect width="800" height="85" rx="10" fill="#090d1a" stroke="#1e293b" stroke-width="1"/>
+      <rect x="16" y="16" width="38" height="38" rx="8" fill="#1e293b"/>
+      <text x="35" y="41" text-anchor="middle" font-size="18">🧲</text>
+
+      <text x="66" y="32" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="14" font-weight="700">Debian-12.5.0-netinst.iso (BitTorrent)</text>
+      <rect x="350" y="19" width="65" height="18" rx="9" fill="#064e3b"/>
+      <text x="382" y="32" text-anchor="middle" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">SEEDING</text>
+
+      <text x="66" y="50" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11">magnet:?xt=urn:btih:618b76df90e38a2e2...</text>
+
+      <rect x="66" y="62" width="650" height="6" rx="3" fill="#10b981"/>
+      <text x="730" y="69" fill="#34d399" font-family="monospace" font-size="11" font-weight="700">100%</text>
+      <text x="66" y="80" fill="#64748b" font-family="monospace" font-size="10">628 MB • Ratio: 2.45 • 42 Peers</text>
+    </g>
+  </g>
+
+  <!-- IDM Floating Download Popup Overlay in Corner -->
+  <g filter="url(#popupShadow)" transform="translate(640, 360)">
+    <rect width="420" height="270" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="2"/>
+
+    <!-- Popup Header -->
+    <rect width="420" height="42" rx="12" fill="#1e293b"/>
+    <circle cx="24" cy="21" r="7" fill="#2563eb"/>
+    <path d="M24 17V23M21 21L24 24L27 21" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="40" y="25" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="12" font-weight="700">ADM — CAPTURED BROWSER DOWNLOAD</text>
+    <text x="395" y="26" text-anchor="middle" fill="#64748b" font-size="16">×</text>
+
+    <!-- Popup URL -->
+    <text x="20" y="64" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">URL</text>
+    <rect x="20" y="70" width="380" height="26" rx="5" fill="#020617" stroke="#334155" stroke-width="1"/>
+    <text x="28" y="87" fill="#cbd5e1" font-family="monospace" font-size="10">https://cdn.example.com/software/installer-v2.exe</text>
+
+    <!-- Filename & Size -->
+    <text x="20" y="116" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">FILE NAME</text>
+    <rect x="20" y="122" width="260" height="26" rx="5" fill="#020617" stroke="#334155" stroke-width="1"/>
+    <text x="28" y="139" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="600">installer-v2.exe</text>
+
+    <text x="295" y="116" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">FILE SIZE</text>
+    <rect x="295" y="122" width="105" height="26" rx="5" fill="#020617" stroke="#334155" stroke-width="1"/>
+    <text x="347" y="139" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="700">1.48 GB</text>
+
+    <!-- Save Path -->
+    <text x="20" y="168" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">SAVE LOCATION</text>
+    <rect x="20" y="174" width="345" height="26" rx="5" fill="#020617" stroke="#334155" stroke-width="1"/>
+    <text x="28" y="191" fill="#cbd5e1" font-family="monospace" font-size="10">C:\Users\Naman\Downloads</text>
+    <rect x="372" y="174" width="28" height="26" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="386" y="191" text-anchor="middle" font-size="12">📁</text>
+
+    <!-- IDM Segment Slider -->
+    <text x="20" y="218" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="10" font-weight="600">PARALLEL STREAMS</text>
+    <rect x="130" y="213" width="140" height="6" rx="3" fill="#334155"/>
+    <rect x="130" y="213" width="105" height="6" rx="3" fill="#3b82f6"/>
+    <circle cx="235" cy="216" r="6" fill="#ffffff"/>
+    <text x="285" y="220" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="700">16 Streams</text>
+
+    <!-- Buttons -->
+    <rect x="195" y="235" width="85" height="26" rx="6" fill="#1e293b"/>
+    <text x="237" y="252" text-anchor="middle" fill="#cbd5e1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="500">Later</text>
+
+    <rect x="290" y="235" width="110" height="26" rx="6" fill="#2563eb"/>
+    <text x="345" y="252" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto" font-size="11" font-weight="700">⚡ Download Now</text>
+  </g>
+</svg>

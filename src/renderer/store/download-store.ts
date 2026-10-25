@@ -1,0 +1,147 @@
+// ============================================================================
+// Anything Download Manager — Download Store (Zustand)
+// ============================================================================
+
+import { create } from 'zustand';
+import type { DownloadTask, DownloadProgress, TorrentTask, DownloadCategory } from '../../shared/types';
+
+export type StatusFilter = 'all' | 'downloading' | 'completed' | 'paused' | 'failed' | 'torrents' | DownloadCategory;
+
+interface DownloadState {
+  downloads: DownloadTask[];
+  torrents: TorrentTask[];
+  activeFilter: StatusFilter;
+  searchQuery: string;
+  sortBy: 'date' | 'name' | 'size' | 'status';
+  sortOrder: 'asc' | 'desc';
+  selectedIds: Set<string>;
+  isNewDownloadOpen: boolean;
+  isSettingsOpen: boolean;
+  isAboutOpen: boolean;
+  isReportIssueOpen: boolean;
+
+  // Actions
+  setDownloads: (downloads: DownloadTask[]) => void;
+  upsertDownload: (download: DownloadTask) => void;
+  updateProgress: (progress: DownloadProgress) => void;
+  removeDownload: (id: string) => void;
+
+  setTorrents: (torrents: TorrentTask[]) => void;
+  upsertTorrent: (torrent: TorrentTask) => void;
+  removeTorrent: (id: string) => void;
+
+  setActiveFilter: (filter: StatusFilter) => void;
+  setSearchQuery: (query: string) => void;
+  setSortBy: (sortBy: 'date' | 'name' | 'size' | 'status') => void;
+  toggleSortOrder: () => void;
+
+  toggleSelect: (id: string, multiSelect?: boolean) => void;
+  selectAll: () => void;
+  clearSelection: () => void;
+
+  setIsNewDownloadOpen: (open: boolean) => void;
+  setIsSettingsOpen: (open: boolean) => void;
+  setIsAboutOpen: (open: boolean) => void;
+  setIsReportIssueOpen: (open: boolean) => void;
+}
+
+export const useDownloadStore = create<DownloadState>((set, get) => ({
+  downloads: [],
+  torrents: [],
+  activeFilter: 'all',
+  searchQuery: '',
+  sortBy: 'date',
+  sortOrder: 'desc',
+  selectedIds: new Set<string>(),
+  isNewDownloadOpen: false,
+  isSettingsOpen: false,
+  isAboutOpen: false,
+  isReportIssueOpen: false,
+
+  setDownloads: (downloads) => set({ downloads }),
+
+  upsertDownload: (task) =>
+    set((state) => {
+      const idx = state.downloads.findIndex((d) => d.id === task.id);
+      if (idx >= 0) {
+        const next = [...state.downloads];
+        next[idx] = { ...next[idx], ...task };
+        return { downloads: next };
+      }
+      return { downloads: [task, ...state.downloads] };
+    }),
+
+  updateProgress: (prog) =>
+    set((state) => {
+      const idx = state.downloads.findIndex((d) => d.id === prog.id);
+      if (idx === -1) return state;
+
+      const current = state.downloads[idx];
+      const updated: DownloadTask = {
+        ...current,
+        downloadedSize: prog.downloadedSize,
+        totalSize: prog.totalSize,
+        speed: prog.speed,
+        averageSpeed: prog.averageSpeed,
+        progress: prog.progress,
+        status: prog.status,
+      };
+
+      const next = [...state.downloads];
+      next[idx] = updated;
+      return { downloads: next };
+    }),
+
+  removeDownload: (id) =>
+    set((state) => ({
+      downloads: state.downloads.filter((d) => d.id !== id),
+      selectedIds: new Set(Array.from(state.selectedIds).filter((selId) => selId !== id)),
+    })),
+
+  setTorrents: (torrents) => set({ torrents }),
+
+  upsertTorrent: (torrent) =>
+    set((state) => {
+      const idx = state.torrents.findIndex((t) => t.id === torrent.id);
+      if (idx >= 0) {
+        const next = [...state.torrents];
+        next[idx] = { ...next[idx], ...torrent };
+        return { torrents: next };
+      }
+      return { torrents: [torrent, ...state.torrents] };
+    }),
+
+  removeTorrent: (id) =>
+    set((state) => ({
+      torrents: state.torrents.filter((t) => t.id !== id),
+    })),
+
+  setActiveFilter: (filter) => set({ activeFilter: filter, selectedIds: new Set() }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSortBy: (sortBy) => set({ sortBy }),
+  toggleSortOrder: () =>
+    set((state) => ({ sortOrder: state.sortOrder === 'asc' ? 'desc' : 'asc' })),
+
+  toggleSelect: (id, multiSelect = false) =>
+    set((state) => {
+      const next = new Set(multiSelect ? state.selectedIds : []);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return { selectedIds: next };
+    }),
+
+  selectAll: () =>
+    set((state) => ({
+      selectedIds: new Set(state.downloads.map((d) => d.id)),
+    })),
+
+  clearSelection: () => set({ selectedIds: new Set() }),
+
+  setIsNewDownloadOpen: (open) => set({ isNewDownloadOpen: open }),
+  setIsSettingsOpen: (open) => set({ isSettingsOpen: open }),
+  setIsAboutOpen: (open) => set({ isAboutOpen: open }),
+  setIsReportIssueOpen: (open) => set({ isReportIssueOpen: open }),
+}));

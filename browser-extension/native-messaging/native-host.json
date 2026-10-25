@@ -1,0 +1,9 @@
+{
+  "name": "com.adm.native_messaging",
+  "description": "Anything Download Manager native messaging host",
+  "path": "/usr/local/bin/adm-native-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://YOUR_EXTENSION_ID_HERE/"
+  ]
+}
