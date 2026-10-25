@@ -17,11 +17,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Windows x64 & ia32
+          # Windows x64
           - os: windows-latest
             arch: x64
             npm_script: dist:win
-          # macOS Universal (Apple Silicon arm64 + Intel x64)
+          # macOS Universal (arm64 & x64)
           - os: macos-latest
             arch: universal
             npm_script: dist:mac
@@ -34,20 +34,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (v22 LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
 
       - name: Install System Build Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools rpm libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2 zip
+          sudo apt-get install -y libarchive-tools libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2 zip
 
       - name: Install Node Dependencies
-        run: npm ci
+        run: |
+          npm install
+          npx electron-builder install-app-deps
 
       - name: Package Universal Browser Extension (Linux runner)
         if: runner.os == 'Linux'
@@ -71,7 +72,6 @@ jobs:
             release/*.zip
             release/*.AppImage
             release/*.deb
-            release/*.rpm
             release/*.blockmap
             release/adm-browser-extension.zip
         env:
