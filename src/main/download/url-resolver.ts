@@ -102,7 +102,7 @@ export class UrlResolver {
 
         // Resumability (Accept-Ranges or Content-Range support)
         const acceptRanges = headersObj['accept-ranges'];
-        const resumable = acceptRanges?.toLowerCase() === 'bytes';
+        let resumable = acceptRanges?.toLowerCase() === 'bytes';
 
         // File name extraction
         const contentDisposition = headersObj['content-disposition'];
@@ -111,6 +111,24 @@ export class UrlResolver {
           fileName = extractFileNameFromUrl(targetUrl);
         }
         fileName = sanitizeFileName(fileName);
+
+        // If file size is not exposed via HEAD, fallback to GET Range probe
+        if (fileSize <= 0) {
+          try {
+            const fallback = await UrlResolver.resolveWithGetRange(targetUrl, requestHeaders);
+            if (fallback.fileSize > 0) {
+              fileSize = fallback.fileSize;
+            }
+            if (fallback.resumable) {
+              resumable = true;
+            }
+            if (fallback.fileName && (!fileName || fileName === 'download')) {
+              fileName = fallback.fileName;
+            }
+          } catch {
+            // Ignore fallback error, return HEAD metadata
+          }
+        }
 
         const mimeType = headersObj['content-type'] ? headersObj['content-type'].split(';')[0].trim() : null;
 

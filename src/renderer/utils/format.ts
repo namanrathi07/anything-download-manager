@@ -18,13 +18,14 @@ export function formatSpeed(bytesPerSecond: number): string {
 }
 
 export function formatETA(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0 || isNaN(seconds)) return '--';
-  if (seconds === 0) return '0s';
+  if (!isFinite(seconds) || seconds <= 0 || isNaN(seconds)) return '--';
 
   const s = Math.floor(seconds % 60);
   const m = Math.floor((seconds / 60) % 60);
   const h = Math.floor((seconds / 3600) % 24);
+  const d = Math.floor(seconds / 86400);
 
+  if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}m ${s}s`;
   return `${s}s`;

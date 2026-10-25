@@ -117,6 +117,7 @@ export function registerIPCHandlers(
 
   downloadManager.on('task-removed', (id) => {
     database.deleteDownload(id);
+    sendToAllWindows(IPC.DOWNLOAD_REMOVED, id);
   });
 
   // Wire TorrentManager events
@@ -158,7 +159,7 @@ export function registerIPCHandlers(
   });
 
   ipcMain.handle(IPC.DOWNLOAD_CANCEL, (_event, id: string) => {
-    downloadManager.cancelDownload(id);
+    downloadManager.removeDownload(id, true);
   });
 
   ipcMain.handle(IPC.DOWNLOAD_REMOVE, (_event, id: string, deleteFile = false) => {

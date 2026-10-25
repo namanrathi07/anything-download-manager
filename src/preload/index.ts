@@ -125,6 +125,12 @@ const electronAPI = {
     return () => ipcRenderer.removeListener(IPC.DOWNLOAD_ADDED, handler);
   },
 
+  onDownloadRemoved: (callback: (id: string) => void) => {
+    const handler = (_event: IpcRendererEvent, id: string) => callback(id);
+    ipcRenderer.on(IPC.DOWNLOAD_REMOVED, handler);
+    return () => ipcRenderer.removeListener(IPC.DOWNLOAD_REMOVED, handler);
+  },
+
   onDownloadCompleted: (callback: (task: DownloadTask) => void) => {
     const handler = (_event: IpcRendererEvent, task: DownloadTask) => callback(task);
     ipcRenderer.on(IPC.DOWNLOAD_COMPLETED, handler);

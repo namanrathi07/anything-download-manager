@@ -30,18 +30,32 @@ export function getProtocol(urlStr: string): string {
 }
 
 /**
- * Extracts filename from URL path
+ * Extracts filename from URL path and search query
  */
 export function extractFileNameFromUrl(urlStr: string): string {
   try {
     const parsed = new URL(urlStr);
+
+    // 1. Check common query parameters often used for direct file downloads
+    for (const param of ['file', 'filename', 'name', 'title', 'attachment', 'download', 'path']) {
+      const val = parsed.searchParams.get(param);
+      if (val && val.includes('.') && !val.includes('/') && !val.includes('\\')) {
+        const decoded = decodeURIComponent(val).trim();
+        if (decoded.length > 0) return decoded;
+      }
+    }
+
+    // 2. Check path segments
     const pathname = parsed.pathname;
     const basename = path.basename(pathname);
     if (basename && basename !== '/' && basename.length > 0) {
       // Decode URI components
       const decoded = decodeURIComponent(basename);
       // Remove any trailing query parameters or fragments if attached
-      return decoded.split('?')[0].split('#')[0] || 'download';
+      const clean = decoded.split('?')[0].split('#')[0].trim();
+      if (clean && clean.length > 0 && clean !== '/') {
+        return clean;
+      }
     }
   } catch {
     // fallback

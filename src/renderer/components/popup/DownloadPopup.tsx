@@ -7,6 +7,27 @@ import { Download, Folder, X, ShieldCheck } from 'lucide-react';
 import { formatBytes } from '../../utils/format';
 import type { NewDownloadRequest } from '../../../shared/types';
 
+function quickExtractFileName(urlStr: string): string {
+  try {
+    const parsed = new URL(urlStr);
+    for (const param of ['file', 'filename', 'name', 'title', 'attachment', 'download', 'path']) {
+      const val = parsed.searchParams.get(param);
+      if (val && val.includes('.') && !val.includes('/') && !val.includes('\\')) {
+        return decodeURIComponent(val).trim();
+      }
+    }
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (segments.length > 0) {
+      const last = segments[segments.length - 1];
+      const clean = decodeURIComponent(last).split('?')[0].split('#')[0].trim();
+      if (clean && clean.length > 0 && clean !== '/') {
+        return clean;
+      }
+    }
+  } catch {}
+  return 'download';
+}
+
 export const DownloadPopup: React.FC = () => {
   const [url, setUrl] = useState('');
   const [fileName, setFileName] = useState('');
@@ -20,8 +41,15 @@ export const DownloadPopup: React.FC = () => {
     // Listen for download intercepted event
     const unbind = window.electronAPI.onBrowserDownloadIntercepted((data: NewDownloadRequest) => {
       setUrl(data.url);
-      if (data.fileName) setFileName(data.fileName);
+      const initialName = data.fileName || quickExtractFileName(data.url);
+      if (initialName) setFileName(initialName);
       if (data.savePath) setSavePath(data.savePath);
+
+      // Auto resolve authoritative file size & file name from remote headers
+      window.electronAPI?.resolveUrl(data.url).then((info) => {
+        if (info.fileName) setFileName(info.fileName);
+        if (info.fileSize > 0) setFileSize(info.fileSize);
+      }).catch(() => {});
     });
 
     // Also load default download path

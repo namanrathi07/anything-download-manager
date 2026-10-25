@@ -117,6 +117,15 @@ export class DownloadTaskHandler extends EventEmitter {
       this.checkAllSegmentsCompleted();
     });
 
+    seg.on('size-discovered', (discoveredSize: number) => {
+      if (this.task.totalSize <= 0 && discoveredSize > 0) {
+        this.task.totalSize = discoveredSize;
+        this.task.resumable = true;
+        this.updateAggregatedProgress();
+        this.emit('status-changed', this.task);
+      }
+    });
+
     seg.on('error', (err) => {
       this.setStatus('failed', err.message);
       this.emit('error', { id: this.task.id, error: err.message });

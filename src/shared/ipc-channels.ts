@@ -22,6 +22,7 @@ export const IPC = {
   DOWNLOAD_PROGRESS: 'download:progress',
   DOWNLOAD_STATUS_CHANGED: 'download:status-changed',
   DOWNLOAD_ADDED: 'download:added',
+  DOWNLOAD_REMOVED: 'download:removed',
   DOWNLOAD_ERROR: 'download:error',
   DOWNLOAD_COMPLETED: 'download:completed',
 

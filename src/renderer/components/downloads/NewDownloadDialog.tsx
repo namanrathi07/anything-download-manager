@@ -8,6 +8,27 @@ import { useDownloadStore } from '../../store/download-store';
 import { formatBytes } from '../../utils/format';
 import type { UrlInfo } from '../../../shared/types';
 
+function quickExtractFileName(urlStr: string): string {
+  try {
+    const parsed = new URL(urlStr);
+    for (const param of ['file', 'filename', 'name', 'title', 'attachment', 'download', 'path']) {
+      const val = parsed.searchParams.get(param);
+      if (val && val.includes('.') && !val.includes('/') && !val.includes('\\')) {
+        return decodeURIComponent(val).trim();
+      }
+    }
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (segments.length > 0) {
+      const last = segments[segments.length - 1];
+      const clean = decodeURIComponent(last).split('?')[0].split('#')[0].trim();
+      if (clean && clean.length > 0 && clean !== '/') {
+        return clean;
+      }
+    }
+  } catch {}
+  return '';
+}
+
 export const NewDownloadDialog: React.FC = () => {
   const { isNewDownloadOpen, setIsNewDownloadOpen } = useDownloadStore();
 
@@ -27,12 +48,35 @@ export const NewDownloadDialog: React.FC = () => {
       // Auto-populate clipboard if valid URL
       navigator.clipboard?.readText().then((text) => {
         if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
-          setUrl(text);
-          resolveUrl(text);
+          const trimmed = text.trim();
+          setUrl(trimmed);
+          const autoName = quickExtractFileName(trimmed);
+          if (autoName) setFileName(autoName);
+          resolveUrl(trimmed);
         }
       }).catch(() => {});
     }
   }, [isNewDownloadOpen]);
+
+  const handleUrlChange = (newUrl: string) => {
+    setUrl(newUrl);
+    if (newUrl.startsWith('http://') || newUrl.startsWith('https://')) {
+      const autoName = quickExtractFileName(newUrl.trim());
+      if (autoName) {
+        setFileName(autoName);
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text')?.trim();
+    if (pasted && (pasted.startsWith('http://') || pasted.startsWith('https://'))) {
+      setUrl(pasted);
+      const autoName = quickExtractFileName(pasted);
+      if (autoName) setFileName(autoName);
+      resolveUrl(pasted);
+    }
+  };
 
   const resolveUrl = async (targetUrl: string) => {
     if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
@@ -114,7 +158,8 @@ export const NewDownloadDialog: React.FC = () => {
                 type="text"
                 placeholder="https://example.com/file.zip"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                onPaste={handlePaste}
                 onBlur={() => resolveUrl(url)}
                 className="flex-1 bg-surface-50 dark:bg-surface-950 border border-surface-300 dark:border-surface-700 rounded-lg px-3 py-2 text-sm text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />

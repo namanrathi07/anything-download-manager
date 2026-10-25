@@ -10,6 +10,7 @@ import {
   FolderOpen,
   FileCheck,
   Trash2,
+  XCircle,
   ChevronDown,
   ChevronUp,
   Film,
@@ -24,6 +25,7 @@ import type { DownloadTask, DownloadCategory } from '../../../shared/types';
 import { DownloadProgress } from './DownloadProgress';
 import { SegmentVisualizer } from './SegmentVisualizer';
 import { formatBytes, formatSpeed, formatETA } from '../../utils/format';
+import { useDownloadStore } from '../../store/download-store';
 
 interface DownloadItemProps {
   task: DownloadTask;
@@ -33,6 +35,7 @@ interface DownloadItemProps {
 
 export const DownloadItem: React.FC<DownloadItemProps> = ({ task, isSelected, onSelect }) => {
   const [showSegments, setShowSegments] = useState(false);
+  const { removeDownload } = useDownloadStore();
 
   const getCategoryIcon = (category: DownloadCategory) => {
     const props = { className: 'w-5 h-5 text-primary-400' };
@@ -73,8 +76,8 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({ task, isSelected, on
     }
   };
 
-  const remainingBytes = task.totalSize > 0 ? task.totalSize - task.downloadedSize : 0;
-  const etaSec = task.speed > 0 ? remainingBytes / task.speed : -1;
+  const remainingBytes = task.totalSize > 0 ? task.totalSize - task.downloadedSize : -1;
+  const etaSec = task.totalSize > 0 && task.speed > 0 && remainingBytes > 0 ? remainingBytes / task.speed : -1;
 
   const handlePause = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,8 +104,15 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({ task, isSelected, on
     window.electronAPI?.openFolder(task.id);
   };
 
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeDownload(task.id);
+    window.electronAPI?.cancelDownload(task.id);
+  };
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    removeDownload(task.id);
     window.electronAPI?.removeDownload(task.id, false);
   };
 
@@ -206,6 +216,16 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({ task, isSelected, on
           >
             <FolderOpen className="w-4 h-4" />
           </button>
+
+          {task.status !== 'completed' && (
+            <button
+              onClick={handleCancel}
+              title="Cancel & remove download"
+              className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-surface-400 hover:text-red-500 transition"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          )}
 
           <button
             onClick={handleDelete}

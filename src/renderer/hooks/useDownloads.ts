@@ -53,6 +53,10 @@ export function useDownloads() {
       upsertDownload(task);
     });
 
+    const unbindRemoved = window.electronAPI.onDownloadRemoved?.((id) => {
+      removeDownload(id);
+    });
+
     const unbindStatus = window.electronAPI.onDownloadStatusChanged((task) => {
       upsertDownload(task);
     });
@@ -76,6 +80,7 @@ export function useDownloads() {
       clearTimeout(updateTimer);
       unbindProgress();
       unbindAdded();
+      unbindRemoved?.();
       unbindStatus();
       unbindCompleted();
       unbindError();

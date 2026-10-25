@@ -27,7 +27,7 @@ export class Segment extends EventEmitter {
   public readonly downloadId: string;
   public readonly index: number;
   public readonly startByte: number;
-  public readonly endByte: number;
+  public endByte: number;
   public downloadedBytes = 0;
   public status: SegmentStatus = 'pending';
   public readonly tempFilePath: string;
@@ -142,6 +142,27 @@ export class Segment extends EventEmitter {
           new Error(`Segment ${this.index} failed with HTTP status ${res.statusCode}`)
         );
         return;
+      }
+
+      // Automatically discover and notify total file size from response headers
+      if (this.endByte < 0) {
+        let discoveredTotal = -1;
+        if (res.statusCode === 206 && res.headers['content-range']) {
+          const match = String(res.headers['content-range']).match(/\/(\d+|\*)/);
+          if (match && match[1] && match[1] !== '*') {
+            discoveredTotal = parseInt(match[1], 10);
+          }
+        } else if (res.headers['content-length']) {
+          const len = parseInt(String(res.headers['content-length']), 10);
+          if (!isNaN(len) && len > 0) {
+            discoveredTotal = this.downloadedBytes + len;
+          }
+        }
+
+        if (discoveredTotal > 0) {
+          this.endByte = discoveredTotal - 1;
+          this.emit('size-discovered', discoveredTotal);
+        }
       }
 
       res.on('data', (chunk: Buffer) => {
