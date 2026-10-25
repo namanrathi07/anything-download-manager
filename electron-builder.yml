@@ -28,6 +28,7 @@ extraResources:
 mac:
   category: public.app-category.utilities
   icon: assets/icon.icns
+  artifactName: ADM-${version}-mac-${arch}.${ext}
   target:
     - target: dmg
       arch:

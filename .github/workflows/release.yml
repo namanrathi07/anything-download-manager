@@ -57,7 +57,6 @@ jobs:
       - name: Compile and Package Application
         run: npm run ${{ matrix.npm_script }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Archive Build Artifacts
