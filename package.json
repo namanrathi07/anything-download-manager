@@ -36,7 +36,6 @@
     "release:major": "node scripts/bump-version.js major"
   },
   "dependencies": {
-    "electron-store": "^10.0.0",
     "uuid": "^11.1.0",
     "webtorrent": "^2.5.1"
   },

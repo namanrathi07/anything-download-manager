@@ -7,13 +7,14 @@ import type {
   DownloadTask,
   DownloadStatus,
   DownloadProgress,
-  DownloadCategory,
 } from '../../shared/types';
 import { Segment } from './segment';
 import { FileWriter } from './file-writer';
 import { SpeedTracker } from './speed-tracker';
 import { generateTempFileName, safeDeleteFile } from '../utils/file-utils';
 import { DEFAULT_SEGMENT_COUNT, MIN_SEGMENT_SIZE } from '../../shared/constants';
+
+const PROGRESS_TICK_MS = 250;
 
 export class DownloadTaskHandler extends EventEmitter {
   public task: DownloadTask;
@@ -28,11 +29,7 @@ export class DownloadTaskHandler extends EventEmitter {
     this.initSegments();
   }
 
-  /**
-   * Initialize segments based on resumability and file size
-   */
   private initSegments(): void {
-    // If segments are already provided (e.g. restoring from DB), re-instantiate them
     if (this.task.segments && this.task.segments.length > 0) {
       this.segmentHandlers = this.task.segments.map((seg) => {
         const handler = new Segment({
@@ -52,11 +49,9 @@ export class DownloadTaskHandler extends EventEmitter {
       return;
     }
 
-    // Otherwise create new segment partitions
     const size = this.task.totalSize;
     let count = this.task.segmentCount || DEFAULT_SEGMENT_COUNT;
 
-    // If server does not support ranges or size is unknown or tiny, force 1 segment
     if (!this.task.resumable || size <= 0 || size < MIN_SEGMENT_SIZE) {
       count = 1;
     }
@@ -108,9 +103,8 @@ export class DownloadTaskHandler extends EventEmitter {
   }
 
   private attachSegmentListeners(seg: Segment): void {
-    seg.on('progress', (data) => {
-      this.speedTracker.recordBytes(0); // update timestamp
-      this.updateAggregatedProgress();
+    seg.on('bytes', (bytes: number) => {
+      this.speedTracker.recordBytes(bytes);
     });
 
     seg.on('completed', () => {
@@ -127,14 +121,15 @@ export class DownloadTaskHandler extends EventEmitter {
     });
 
     seg.on('error', (err) => {
+      this.clearTicker();
+      for (const s of this.segmentHandlers) {
+        if (s !== seg && s.status === 'downloading') s.pause();
+      }
       this.setStatus('failed', err.message);
       this.emit('error', { id: this.task.id, error: err.message });
     });
   }
 
-  /**
-   * Start downloading all segments
-   */
   public start(): void {
     if (this.task.status === 'downloading' || this.task.status === 'completed') {
       return;
@@ -143,19 +138,16 @@ export class DownloadTaskHandler extends EventEmitter {
     this.setStatus('downloading');
     this.speedTracker.reset();
 
-    // Start progress broadcast ticker (every 500ms)
+    this.clearTicker();
     this.progressInterval = setInterval(() => {
       this.broadcastProgress();
-    }, 500);
+    }, PROGRESS_TICK_MS);
 
     for (const seg of this.segmentHandlers) {
       seg.start();
     }
   }
 
-  /**
-   * Pause all active segments
-   */
   public pause(): void {
     if (this.task.status !== 'downloading') return;
 
@@ -163,21 +155,16 @@ export class DownloadTaskHandler extends EventEmitter {
     for (const seg of this.segmentHandlers) {
       seg.pause();
     }
+    this.updateAggregatedProgress();
     this.task.speed = 0;
     this.setStatus('paused');
   }
 
-  /**
-   * Resume paused download
-   */
   public resume(): void {
     if (this.task.status !== 'paused' && this.task.status !== 'failed') return;
     this.start();
   }
 
-  /**
-   * Cancel and abort all segments
-   */
   public cancel(): void {
     this.clearTicker();
     for (const seg of this.segmentHandlers) {
@@ -200,20 +187,18 @@ export class DownloadTaskHandler extends EventEmitter {
     if (errorMsg) {
       this.task.error = errorMsg;
     }
+    this.task.segments = this.segmentHandlers.map((s) => s.toJSON());
     this.emit('status-changed', this.task);
   }
 
   private updateAggregatedProgress(): void {
     let totalDownloaded = 0;
-    let combinedSpeed = 0;
-
     for (const seg of this.segmentHandlers) {
       totalDownloaded += seg.downloadedBytes;
-      combinedSpeed += seg.getSpeed();
     }
 
     this.task.downloadedSize = totalDownloaded;
-    this.task.speed = combinedSpeed;
+    this.task.speed = this.speedTracker.getCurrentSpeed();
     this.task.averageSpeed = this.speedTracker.getAverageSpeed();
 
     if (this.task.totalSize > 0) {
@@ -226,8 +211,6 @@ export class DownloadTaskHandler extends EventEmitter {
 
   private broadcastProgress(): void {
     this.updateAggregatedProgress();
-
-    // Update internal segments state snapshot
     this.task.segments = this.segmentHandlers.map((s) => s.toJSON());
 
     const progressObj: DownloadProgress = {
@@ -251,6 +234,7 @@ export class DownloadTaskHandler extends EventEmitter {
   }
 
   private async checkAllSegmentsCompleted(): Promise<void> {
+    if (this.task.status === 'merging' || this.task.status === 'completed') return;
     const allDone = this.segmentHandlers.every((s) => s.status === 'completed');
     if (!allDone) return;
 
@@ -261,7 +245,8 @@ export class DownloadTaskHandler extends EventEmitter {
       const tempPaths = this.segmentHandlers.map((s) => s.tempFilePath);
       await FileWriter.mergeSegments(tempPaths, this.task.savePath);
 
-      this.task.downloadedSize = this.task.totalSize > 0 ? this.task.totalSize : this.task.downloadedSize;
+      this.task.downloadedSize =
+        this.task.totalSize > 0 ? this.task.totalSize : this.task.downloadedSize;
       this.task.progress = 100;
       this.task.speed = 0;
       this.task.completedAt = new Date().toISOString();

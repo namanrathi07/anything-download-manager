@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Pure Cross-Platform Resilient Database Store
+// Anything Download Manager — Non-Blocking Debounced Atomic Database Store
 // ============================================================================
 
 import fs from 'fs';
@@ -14,9 +14,14 @@ interface DatabaseSchema {
   torrents: Record<string, TorrentTask>;
 }
 
+const SAVE_DEBOUNCE_MS = 500;
+
 export class AppDatabase {
   private static instance: AppDatabase | null = null;
   private filePath: string;
+  private saveTimer: NodeJS.Timeout | null = null;
+  private isWriting = false;
+  private pendingWrite = false;
   private data: DatabaseSchema = {
     version: 1,
     downloads: {},
@@ -56,29 +61,59 @@ export class AppDatabase {
     }
   }
 
-  private save(): void {
+  private scheduleSave(): void {
+    if (this.saveTimer) return;
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null;
+      void this.flushAsync();
+    }, SAVE_DEBOUNCE_MS);
+  }
+
+  private async flushAsync(): Promise<void> {
+    if (this.isWriting) {
+      this.pendingWrite = true;
+      return;
+    }
+    this.isWriting = true;
     try {
       const tempPath = `${this.filePath}.tmp`;
-      fs.writeFileSync(tempPath, JSON.stringify(this.data, null, 2), 'utf8');
-      fs.renameSync(tempPath, this.filePath);
+      const payload = JSON.stringify(this.data);
+      await fs.promises.writeFile(tempPath, payload, 'utf8');
+      await fs.promises.rename(tempPath, this.filePath);
     } catch (err: any) {
-      console.error('[ADM Database] Failed to persist data to disk:', err.message);
+      console.error('[ADM Database] Async persist failed:', err.message);
+    } finally {
+      this.isWriting = false;
+      if (this.pendingWrite) {
+        this.pendingWrite = false;
+        void this.flushAsync();
+      }
     }
   }
 
-  // ─── Download Operations ──────────────────────────────────────────────────
+  private flushSync(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    try {
+      const tempPath = `${this.filePath}.tmp`;
+      fs.writeFileSync(tempPath, JSON.stringify(this.data), 'utf8');
+      fs.renameSync(tempPath, this.filePath);
+    } catch (err: any) {
+      console.error('[ADM Database] Sync persist failed:', err.message);
+    }
+  }
 
   public saveDownload(task: DownloadTask): void {
     this.data.downloads[task.id] = { ...task };
-    this.save();
+    this.scheduleSave();
   }
 
   public getAllDownloads(): DownloadTask[] {
-    return Object.values(this.data.downloads).sort((a, b) => {
-      const timeA = new Date(a.createdAt).getTime() || 0;
-      const timeB = new Date(b.createdAt).getTime() || 0;
-      return timeB - timeA;
-    });
+    return Object.values(this.data.downloads).sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt)
+    );
   }
 
   public getDownloadById(id: string): DownloadTask | null {
@@ -88,7 +123,7 @@ export class AppDatabase {
   public deleteDownload(id: string): void {
     if (this.data.downloads[id]) {
       delete this.data.downloads[id];
-      this.save();
+      this.scheduleSave();
     }
   }
 
@@ -101,38 +136,36 @@ export class AppDatabase {
       }
     }
     if (changed) {
-      this.save();
+      this.scheduleSave();
     }
   }
 
-  // ─── Torrent Operations ───────────────────────────────────────────────────
-
   public saveTorrent(torrent: TorrentTask): void {
     this.data.torrents[torrent.id] = { ...torrent };
-    this.save();
+    this.scheduleSave();
   }
 
   public getAllTorrents(): TorrentTask[] {
-    return Object.values(this.data.torrents).sort((a, b) => {
-      const timeA = new Date(a.createdAt).getTime() || 0;
-      const timeB = new Date(b.createdAt).getTime() || 0;
-      return timeB - timeA;
-    });
+    return Object.values(this.data.torrents).sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt)
+    );
   }
 
   public deleteTorrent(id: string): void {
     if (this.data.torrents[id]) {
       delete this.data.torrents[id];
-      this.save();
+      this.scheduleSave();
     }
   }
 
-  // ─── Statistics ───────────────────────────────────────────────────────────
-
   public getStats(): DownloadStats {
     const tasks = Object.values(this.data.downloads);
-    const completed = tasks.filter((t) => t.status === 'completed').length;
-    const totalBytes = tasks.reduce((sum, t) => sum + (t.downloadedSize || 0), 0);
+    let completed = 0;
+    let totalBytes = 0;
+    for (const t of tasks) {
+      if (t.status === 'completed') completed++;
+      totalBytes += t.downloadedSize || 0;
+    }
     return {
       totalDownloads: tasks.length,
       completedDownloads: completed,
@@ -142,6 +175,6 @@ export class AppDatabase {
   }
 
   public close(): void {
-    this.save();
+    this.flushSync();
   }
 }

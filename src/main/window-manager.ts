@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Window Manager
+// Anything Download Manager — Window Manager (Singleton & Lifecycle Optimized)
 // ============================================================================
 
 import { BrowserWindow, app } from 'electron';
@@ -9,7 +9,6 @@ export class WindowManager {
   private static instance: WindowManager | null = null;
   private mainWindow: BrowserWindow | null = null;
   private popupWindow: BrowserWindow | null = null;
-
   private isDev = !app.isPackaged;
 
   private constructor() {}
@@ -22,18 +21,19 @@ export class WindowManager {
   }
 
   public getMainWindow(): BrowserWindow | null {
-    return this.mainWindow;
+    return this.mainWindow && !this.mainWindow.isDestroyed() ? this.mainWindow : null;
   }
 
   public getPopupWindow(): BrowserWindow | null {
-    return this.popupWindow;
+    return this.popupWindow && !this.popupWindow.isDestroyed() ? this.popupWindow : null;
   }
 
   public createMainWindow(): BrowserWindow {
-    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      if (this.mainWindow.isMinimized()) this.mainWindow.restore();
-      this.mainWindow.focus();
-      return this.mainWindow;
+    const existing = this.getMainWindow();
+    if (existing) {
+      if (existing.isMinimized()) existing.restore();
+      existing.focus();
+      return existing;
     }
 
     const preloadPath = path.join(__dirname, '../preload/index.js');
@@ -45,12 +45,17 @@ export class WindowManager {
       minHeight: 600,
       title: 'Anything Download Manager',
       backgroundColor: '#020617',
+      show: false,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
       },
+    });
+
+    this.mainWindow.once('ready-to-show', () => {
+      this.mainWindow?.show();
     });
 
     if (this.isDev && process.env.VITE_DEV_SERVER_URL) {
@@ -68,9 +73,10 @@ export class WindowManager {
   }
 
   public createPopupWindow(): BrowserWindow {
-    if (this.popupWindow && !this.popupWindow.isDestroyed()) {
-      this.popupWindow.focus();
-      return this.popupWindow;
+    const existing = this.getPopupWindow();
+    if (existing) {
+      existing.focus();
+      return existing;
     }
 
     const preloadPath = path.join(__dirname, '../preload/index.js');
@@ -83,12 +89,17 @@ export class WindowManager {
       center: true,
       title: 'ADM — Download File',
       backgroundColor: '#0f172a',
+      show: false,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
       },
+    });
+
+    this.popupWindow.once('ready-to-show', () => {
+      this.popupWindow?.show();
     });
 
     if (this.isDev && process.env.VITE_DEV_SERVER_URL) {

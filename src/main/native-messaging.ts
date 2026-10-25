@@ -4,6 +4,7 @@
 
 import http from 'http';
 import crypto from 'crypto';
+import type { Duplex } from 'stream';
 import { EventEmitter } from 'events';
 import { app } from 'electron';
 import { WEBSOCKET_PORT } from '../shared/constants';
@@ -12,7 +13,7 @@ import type { BrowserDownloadMessage } from '../shared/types';
 export class NativeMessagingHost extends EventEmitter {
   private server: http.Server | null = null;
   private port = WEBSOCKET_PORT;
-  private sockets: any[] = [];
+  private sockets = new Set<Duplex>();
 
   constructor() {
     super();
@@ -23,7 +24,6 @@ export class NativeMessagingHost extends EventEmitter {
     if (this.server) return;
 
     this.server = http.createServer((req, res) => {
-      // Enable CORS for browser extension
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -34,18 +34,18 @@ export class NativeMessagingHost extends EventEmitter {
         return;
       }
 
-      // Handle simple HTTP POST fallback from extension
       if (req.method === 'POST' && req.url === '/intercept') {
         let body = '';
         req.on('data', (chunk) => {
           body += chunk;
+          if (body.length > 1024 * 1024) req.destroy();
         });
         req.on('end', () => {
           try {
             const data = JSON.parse(body);
             this.handleIncomingDownload(data);
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ status: 'ok' }));
+            res.end('{"status":"ok"}');
           } catch (err: any) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: err.message }));
@@ -54,7 +54,6 @@ export class NativeMessagingHost extends EventEmitter {
         return;
       }
 
-      // Health check endpoint
       if (req.url === '/ping') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'adm-running', version: app.getVersion() || '1.0.0' }));
@@ -65,8 +64,7 @@ export class NativeMessagingHost extends EventEmitter {
       res.end();
     });
 
-    // WebSocket upgrade handler
-    this.server.on('upgrade', (req, socket, head) => {
+    this.server.on('upgrade', (req, socket) => {
       if (req.headers['upgrade']?.toLowerCase() !== 'websocket') {
         socket.destroy();
         return;
@@ -83,33 +81,44 @@ export class NativeMessagingHost extends EventEmitter {
         .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
         .digest('base64');
 
-      const headers = [
-        'HTTP/1.1 101 Switching Protocols',
-        'Upgrade: websocket',
-        'Connection: Upgrade',
-        `Sec-WebSocket-Accept: ${digest}`,
-      ];
-
-      socket.write(headers.join('\r\n') + '\r\n\r\n');
-      this.sockets.push(socket);
+      socket.write(
+        'HTTP/1.1 101 Switching Protocols\r\n' +
+          'Upgrade: websocket\r\n' +
+          'Connection: Upgrade\r\n' +
+          `Sec-WebSocket-Accept: ${digest}\r\n\r\n`
+      );
+      this.sockets.add(socket);
 
       socket.on('data', (buffer: Buffer) => {
         try {
+          if (buffer.length < 2) return;
+          const opcode = buffer[0] & 0x0f;
+          if (opcode === 0x08) {
+            socket.end();
+            return;
+          }
+          if (opcode === 0x09) {
+            socket.write(Buffer.from([0x8a, 0x00]));
+            return;
+          }
+          if (opcode !== 0x01) return;
+
           const message = this.decodeWebSocketFrame(buffer);
           if (message) {
             const data = JSON.parse(message);
             this.handleIncomingDownload(data);
           }
         } catch {
-          // ignore corrupted frame
+          // Ignore malformed frame
         }
       });
 
       socket.on('close', () => {
-        this.sockets = this.sockets.filter((s) => s !== socket);
+        this.sockets.delete(socket);
       });
 
       socket.on('error', () => {
+        this.sockets.delete(socket);
         socket.destroy();
       });
     });
@@ -124,7 +133,7 @@ export class NativeMessagingHost extends EventEmitter {
   }
 
   private handleIncomingDownload(data: any): void {
-    if (data.type === 'new-download' || data.url) {
+    if (data && (data.type === 'new-download' || data.url)) {
       const msg: BrowserDownloadMessage = {
         type: 'new-download',
         url: data.url,
@@ -147,24 +156,27 @@ export class NativeMessagingHost extends EventEmitter {
     let offset = 2;
 
     if (length === 126) {
+      if (buffer.length < 4) return null;
       length = buffer.readUInt16BE(2);
       offset += 2;
     } else if (length === 127) {
-      // 64-bit length
+      if (buffer.length < 10) return null;
+      length = Number(buffer.readBigUInt64BE(2));
       offset += 8;
     }
 
     if (!isMasked) {
-      return buffer.slice(offset, offset + length).toString('utf8');
+      return buffer.subarray(offset, offset + length).toString('utf8');
     }
 
-    const maskingKey = buffer.slice(offset, offset + 4);
+    if (buffer.length < offset + 4 + length) return null;
+    const maskingKey = buffer.subarray(offset, offset + 4);
     offset += 4;
 
-    const payload = buffer.slice(offset, offset + length);
-    const unmasked = Buffer.alloc(payload.length);
+    const payload = buffer.subarray(offset, offset + length);
+    const unmasked = Buffer.allocUnsafe(payload.length);
     for (let i = 0; i < payload.length; i++) {
-      unmasked[i] = payload[i] ^ maskingKey[i % 4];
+      unmasked[i] = payload[i] ^ maskingKey[i & 3];
     }
 
     return unmasked.toString('utf8');
@@ -174,7 +186,7 @@ export class NativeMessagingHost extends EventEmitter {
     for (const socket of this.sockets) {
       socket.destroy();
     }
-    this.sockets = [];
+    this.sockets.clear();
     if (this.server) {
       this.server.close();
       this.server = null;

@@ -14,9 +14,7 @@ import type {
 import { DEFAULT_MAX_CONCURRENT, DEFAULT_SEGMENT_COUNT } from '../../shared/constants';
 import { DownloadTaskHandler } from './download-task';
 import { UrlResolver } from './url-resolver';
-import {
-  getDefaultDownloadPath,
-} from '../utils/platform-utils';
+import { getDefaultDownloadPath } from '../utils/platform-utils';
 import {
   ensureDir,
   getCategoryFromFileName,
@@ -48,21 +46,16 @@ export class DownloadManager extends EventEmitter {
   }
 
   public getAllTasks(): DownloadTask[] {
-    return Array.from(this.tasks.values()).map((h) => h.task);
+    return Array.from(this.tasks.values(), (h) => h.task);
   }
 
   public getTask(id: string): DownloadTask | null {
-    const handler = this.tasks.get(id);
-    return handler ? handler.task : null;
+    return this.tasks.get(id)?.task ?? null;
   }
 
-  /**
-   * Restores an existing task (e.g. from SQLite on app startup)
-   */
   public restoreTask(task: DownloadTask): void {
     if (this.tasks.has(task.id)) return;
 
-    // Reset speed and downloading status to paused if it was downloading on previous shutdown
     if (task.status === 'downloading' || task.status === 'merging') {
       task.status = 'paused';
     }
@@ -73,19 +66,17 @@ export class DownloadManager extends EventEmitter {
     this.tasks.set(task.id, handler);
   }
 
-  /**
-   * Adds a new download and begins processing
-   */
   public async addDownload(req: NewDownloadRequest): Promise<DownloadTask> {
     const id = uuidv4();
+    let resolvedUrl = req.url;
     let fileName = req.fileName;
     let totalSize = -1;
     let resumable = true;
     let mimeType: string | null = null;
 
-    // Resolve URL info if not provided
     try {
       const info = await UrlResolver.resolve(req.url, req.headers);
+      resolvedUrl = info.url || req.url;
       if (!fileName) fileName = info.fileName;
       totalSize = info.fileSize;
       resumable = info.resumable;
@@ -102,13 +93,12 @@ export class DownloadManager extends EventEmitter {
 
     const fullSavePath = getUniqueFilePath(path.join(targetDir, fileName!));
     const finalFileName = path.basename(fullSavePath);
-
     const category: DownloadCategory =
       req.category || getCategoryFromFileName(finalFileName);
 
     const task: DownloadTask = {
       id,
-      url: req.url,
+      url: resolvedUrl,
       fileName: finalFileName,
       savePath: fullSavePath,
       totalSize,
@@ -163,8 +153,7 @@ export class DownloadManager extends EventEmitter {
   }
 
   private startOrQueue(handler: DownloadTaskHandler): void {
-    const activeCount = this.getActiveDownloadsCount();
-    if (activeCount < this.maxConcurrent) {
+    if (this.getActiveDownloadsCount() < this.maxConcurrent) {
       handler.start();
     } else {
       handler.task.status = 'queued';
@@ -243,15 +232,11 @@ export class DownloadManager extends EventEmitter {
   }
 
   public clearCompleted(): void {
-    const toRemove: string[] = [];
     for (const [id, handler] of this.tasks.entries()) {
       if (handler.task.status === 'completed') {
-        toRemove.push(id);
+        this.tasks.delete(id);
+        this.emit('task-removed', id);
       }
-    }
-    for (const id of toRemove) {
-      this.tasks.delete(id);
-      this.emit('task-removed', id);
     }
   }
 }

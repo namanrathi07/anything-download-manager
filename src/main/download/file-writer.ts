@@ -1,77 +1,70 @@
 // ============================================================================
-// Anything Download Manager — File Writer / Segment Merger
+// Anything Download Manager — High-Throughput File Writer / Segment Merger
 // ============================================================================
 
 import fs from 'fs';
+import { pipeline } from 'stream/promises';
 import path from 'path';
 import { ensureDir, safeDeleteFile } from '../utils/file-utils';
 
+const MERGE_HIGH_WATER_MARK = 1024 * 1024;
+
 export class FileWriter {
-  /**
-   * Merges multiple segment temporary files sequentially into the final destination path
-   */
   public static async mergeSegments(
     segmentFilePaths: string[],
     destinationPath: string
   ): Promise<void> {
     ensureDir(path.dirname(destinationPath));
 
-    // If single segment, we can simply rename or copy if cross-device
     if (segmentFilePaths.length === 1) {
       const source = segmentFilePaths[0];
       try {
-        fs.renameSync(source, destinationPath);
+        await fs.promises.rename(source, destinationPath);
         return;
       } catch {
-        // Fallback to copy & unlink if rename fails across partitions
-        await FileWriter.copyFile(source, destinationPath);
+        await fs.promises.copyFile(source, destinationPath);
         safeDeleteFile(source);
         return;
       }
     }
 
-    // Multiple segments: append one by one using streams
-    const destStream = fs.createWriteStream(destinationPath, { flags: 'w' });
+    const [firstSegment, ...remainingSegments] = segmentFilePaths;
+    if (!fs.existsSync(firstSegment)) {
+      throw new Error(`Segment file missing: ${firstSegment}`);
+    }
 
-    for (const segmentPath of segmentFilePaths) {
-      if (!fs.existsSync(segmentPath)) {
-        destStream.end();
-        throw new Error(`Segment file missing: ${segmentPath}`);
+    try {
+      await fs.promises.rename(firstSegment, destinationPath);
+    } catch {
+      await fs.promises.copyFile(firstSegment, destinationPath);
+      safeDeleteFile(firstSegment);
+    }
+
+    const destStream = fs.createWriteStream(destinationPath, {
+      flags: 'a',
+      highWaterMark: MERGE_HIGH_WATER_MARK,
+    });
+
+    try {
+      for (const segmentPath of remainingSegments) {
+        if (!fs.existsSync(segmentPath)) {
+          throw new Error(`Segment file missing: ${segmentPath}`);
+        }
+        const srcStream = fs.createReadStream(segmentPath, {
+          highWaterMark: MERGE_HIGH_WATER_MARK,
+        });
+        await pipeline(srcStream, destStream, { end: false });
       }
-
+    } finally {
       await new Promise<void>((resolve, reject) => {
-        const srcStream = fs.createReadStream(segmentPath);
-        srcStream.on('error', (err) => {
-          destStream.end();
-          reject(err);
-        });
-        srcStream.on('end', () => {
-          resolve();
-        });
-        srcStream.pipe(destStream, { end: false });
+        destStream.on('finish', resolve);
+        destStream.on('error', reject);
+        destStream.end();
       });
     }
 
-    await new Promise<void>((resolve, reject) => {
-      destStream.on('finish', () => resolve());
-      destStream.on('error', (err) => reject(err));
-      destStream.end();
-    });
-
-    // Cleanup all segment temporary files
-    for (const segmentPath of segmentFilePaths) {
+    for (const segmentPath of remainingSegments) {
       safeDeleteFile(segmentPath);
     }
-  }
-
-  private static async copyFile(src: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const read = fs.createReadStream(src);
-      const write = fs.createWriteStream(dest);
-      read.on('error', reject);
-      write.on('error', reject);
-      write.on('finish', () => resolve());
-      read.pipe(write);
-    });
   }
 }

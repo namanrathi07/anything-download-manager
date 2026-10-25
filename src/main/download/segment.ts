@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Download Segment
+// Anything Download Manager — Download Segment (Buffered I/O + Keep-Alive)
 // ============================================================================
 
 import { EventEmitter } from 'events';
@@ -9,18 +9,22 @@ import https from 'https';
 import { URL } from 'url';
 import type { DownloadSegment, SegmentStatus } from '../../shared/types';
 import { SpeedTracker } from './speed-tracker';
+import { sharedHttpAgent, sharedHttpsAgent } from './url-resolver';
 
 export interface SegmentOptions {
   id: number;
   downloadId: string;
   index: number;
   startByte: number;
-  endByte: number; // inclusive, or -1 for single stream till end
+  endByte: number;
   downloadedBytes?: number;
   tempFilePath: string;
   url: string;
   headers?: Record<string, string>;
 }
+
+const STREAM_HIGH_WATER_MARK = 256 * 1024;
+const MAX_REDIRECTS = 5;
 
 export class Segment extends EventEmitter {
   public readonly id: number;
@@ -39,6 +43,7 @@ export class Segment extends EventEmitter {
   private speedTracker: SpeedTracker;
   private retryAttempts = 0;
   private maxRetries = 3;
+  private retryTimer: NodeJS.Timeout | null = null;
 
   constructor(options: SegmentOptions) {
     super();
@@ -53,7 +58,6 @@ export class Segment extends EventEmitter {
     this.headers = options.headers || {};
     this.speedTracker = new SpeedTracker();
 
-    // Check if segment is already complete
     const totalExpected = this.getTotalBytes();
     if (totalExpected > 0 && this.downloadedBytes >= totalExpected) {
       this.status = 'completed';
@@ -66,7 +70,7 @@ export class Segment extends EventEmitter {
   }
 
   public getSpeed(): number {
-    return this.speedTracker.getCurrentSpeed();
+    return this.status === 'downloading' ? this.speedTracker.getCurrentSpeed() : 0;
   }
 
   public toJSON(): DownloadSegment {
@@ -83,13 +87,9 @@ export class Segment extends EventEmitter {
     };
   }
 
-  /**
-   * Start or resume segment downloading
-   */
-  public start(): void {
-    if (this.status === 'downloading' || this.status === 'completed') {
-      return;
-    }
+  public start(redirectCount = 0): void {
+    if (this.status === 'downloading' && redirectCount === 0) return;
+    if (this.status === 'completed') return;
 
     const totalExpected = this.getTotalBytes();
     if (totalExpected > 0 && this.downloadedBytes >= totalExpected) {
@@ -99,153 +99,195 @@ export class Segment extends EventEmitter {
     }
 
     this.status = 'downloading';
-    this.speedTracker.reset();
+    if (redirectCount === 0) {
+      this.speedTracker.reset();
+    }
 
     const currentOffset = this.startByte + this.downloadedBytes;
     const parsed = new URL(this.url);
-    const client = parsed.protocol === 'https:' ? https : http;
+    const isHttps = parsed.protocol === 'https:';
+    const client = isHttps ? https : http;
 
     const requestHeaders: Record<string, string> = {
       'User-Agent':
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 ADM/1.0',
-      'Accept': '*/*',
+      Accept: '*/*',
       ...this.headers,
     };
 
-    // Only add Range header if endByte >= 0 or resuming
     if (this.endByte >= 0) {
       requestHeaders['Range'] = `bytes=${currentOffset}-${this.endByte}`;
     } else if (this.downloadedBytes > 0) {
       requestHeaders['Range'] = `bytes=${currentOffset}-`;
     }
 
-    // Open write stream in append mode if resuming, or write mode if start
-    const flags = this.downloadedBytes > 0 ? 'a' : 'w';
-    this.writeStream = fs.createWriteStream(this.tempFilePath, { flags });
+    if (!this.writeStream || this.writeStream.destroyed) {
+      const flags = this.downloadedBytes > 0 ? 'a' : 'w';
+      this.writeStream = fs.createWriteStream(this.tempFilePath, {
+        flags,
+        highWaterMark: STREAM_HIGH_WATER_MARK,
+      });
+      this.writeStream.on('error', (err) => this.handleError(err));
+    }
 
-    this.writeStream.on('error', (err) => {
-      this.handleError(err);
-    });
-
-    const options: http.RequestOptions = {
-      method: 'GET',
-      hostname: parsed.hostname,
-      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-      path: `${parsed.pathname}${parsed.search}`,
-      headers: requestHeaders,
-    };
-
-    this.activeRequest = client.request(options, (res) => {
-      // Check for valid response code (200 OK or 206 Partial Content)
-      if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-        this.handleError(
-          new Error(`Segment ${this.index} failed with HTTP status ${res.statusCode}`)
-        );
-        return;
-      }
-
-      // Automatically discover and notify total file size from response headers
-      if (this.endByte < 0) {
-        let discoveredTotal = -1;
-        if (res.statusCode === 206 && res.headers['content-range']) {
-          const match = String(res.headers['content-range']).match(/\/(\d+|\*)/);
-          if (match && match[1] && match[1] !== '*') {
-            discoveredTotal = parseInt(match[1], 10);
+    this.activeRequest = client.request(
+      {
+        method: 'GET',
+        hostname: parsed.hostname,
+        port: parsed.port || (isHttps ? 443 : 80),
+        path: `${parsed.pathname}${parsed.search}`,
+        headers: requestHeaders,
+        agent: isHttps ? sharedHttpsAgent : sharedHttpAgent,
+      },
+      (res) => {
+        if (
+          res.statusCode &&
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          res.destroy();
+          if (redirectCount >= MAX_REDIRECTS) {
+            this.handleError(new Error(`Segment ${this.index} exceeded max redirects`));
+            return;
           }
-        } else if (res.headers['content-length']) {
-          const len = parseInt(String(res.headers['content-length']), 10);
-          if (!isNaN(len) && len > 0) {
-            discoveredTotal = this.downloadedBytes + len;
+          this.url = new URL(res.headers.location, this.url).toString();
+          this.start(redirectCount + 1);
+          return;
+        }
+
+        if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+          res.destroy();
+          this.handleError(
+            new Error(`Segment ${this.index} failed with HTTP status ${res.statusCode}`)
+          );
+          return;
+        }
+
+        if (this.endByte < 0) {
+          let discoveredTotal = -1;
+          if (res.statusCode === 206 && res.headers['content-range']) {
+            const match = String(res.headers['content-range']).match(/\/(\d+|\*)/);
+            if (match && match[1] && match[1] !== '*') {
+              discoveredTotal = parseInt(match[1], 10);
+            }
+          } else if (res.headers['content-length']) {
+            const len = parseInt(String(res.headers['content-length']), 10);
+            if (!isNaN(len) && len > 0) {
+              discoveredTotal = this.downloadedBytes + len;
+            }
+          }
+
+          if (discoveredTotal > 0) {
+            this.endByte = discoveredTotal - 1;
+            this.emit('size-discovered', discoveredTotal);
           }
         }
 
-        if (discoveredTotal > 0) {
-          this.endByte = discoveredTotal - 1;
-          this.emit('size-discovered', discoveredTotal);
-        }
-      }
+        const expectedBytes = this.getTotalBytes();
 
-      res.on('data', (chunk: Buffer) => {
-        if (this.status !== 'downloading') return;
+        res.on('data', (chunk: Buffer) => {
+          if (this.status !== 'downloading') return;
 
-        this.downloadedBytes += chunk.length;
-        this.speedTracker.recordBytes(chunk.length);
+          let bytesToWrite = chunk;
+          if (expectedBytes > 0 && this.downloadedBytes + chunk.length > expectedBytes) {
+            const remaining = expectedBytes - this.downloadedBytes;
+            bytesToWrite = chunk.subarray(0, remaining);
+          }
 
-        if (this.writeStream && !this.writeStream.destroyed) {
-          this.writeStream.write(chunk);
-        }
+          this.downloadedBytes += bytesToWrite.length;
+          this.speedTracker.recordBytes(bytesToWrite.length);
+          this.emit('bytes', bytesToWrite.length);
 
-        this.emit('progress', {
-          index: this.index,
-          downloadedBytes: this.downloadedBytes,
-          speed: this.getSpeed(),
+          if (this.writeStream && !this.writeStream.destroyed) {
+            const canContinue = this.writeStream.write(bytesToWrite);
+            if (!canContinue) {
+              res.pause();
+              this.writeStream.once('drain', () => {
+                if (this.status === 'downloading') res.resume();
+              });
+            }
+          }
+
+          if (expectedBytes > 0 && this.downloadedBytes >= expectedBytes) {
+            this.finish();
+          }
         });
 
-        // Check if finished by byte count
-        if (totalExpected > 0 && this.downloadedBytes >= totalExpected) {
-          this.finish();
-        }
-      });
+        res.on('end', () => {
+          if (this.status === 'downloading') {
+            this.finish();
+          }
+        });
 
-      res.on('end', () => {
-        if (this.status === 'downloading') {
-          this.finish();
-        }
-      });
+        res.on('error', (err) => this.handleError(err));
+      }
+    );
 
-      res.on('error', (err) => {
-        this.handleError(err);
-      });
+    this.activeRequest.on('socket', (socket) => {
+      socket.setNoDelay(true);
     });
 
-    this.activeRequest.on('error', (err) => {
-      this.handleError(err);
-    });
-
+    this.activeRequest.on('error', (err) => this.handleError(err));
     this.activeRequest.end();
   }
 
-  /**
-   * Pause segment download
-   */
   public pause(): void {
     if (this.status !== 'downloading') return;
     this.status = 'paused';
+    this.clearRetryTimer();
     this.cleanupStreams();
     this.emit('paused', this);
   }
 
-  /**
-   * Cancel and cleanup
-   */
   public cancel(): void {
     this.status = 'failed';
+    this.clearRetryTimer();
     this.cleanupStreams();
   }
 
   private finish(): void {
+    if (this.status === 'completed') return;
     this.status = 'completed';
-    this.cleanupStreams();
-    this.emit('completed', this);
+
+    if (this.activeRequest) {
+      this.activeRequest.destroy();
+      this.activeRequest = null;
+    }
+
+    if (this.writeStream) {
+      const ws = this.writeStream;
+      this.writeStream = null;
+      ws.end(() => {
+        this.emit('completed', this);
+      });
+    } else {
+      this.emit('completed', this);
+    }
   }
 
   private handleError(err: Error): void {
     this.cleanupStreams();
-
-    if (this.status === 'paused') {
-      return;
-    }
+    if (this.status === 'paused' || this.status === 'completed') return;
 
     if (this.retryAttempts < this.maxRetries) {
       this.retryAttempts++;
-      setTimeout(() => {
+      this.retryTimer = setTimeout(() => {
         if (this.status !== 'paused' && this.status !== 'completed') {
+          this.status = 'pending';
           this.start();
         }
       }, 1000 * this.retryAttempts);
     } else {
       this.status = 'failed';
       this.emit('error', err);
+    }
+  }
+
+  private clearRetryTimer(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
     }
   }
 

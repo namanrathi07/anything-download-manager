@@ -1,82 +1,76 @@
 // ============================================================================
-// Anything Download Manager — useDownloads Hook
+// Anything Download Manager — useDownloads Hook (Memoized + Stale-Closure Safe)
 // ============================================================================
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDownloadStore } from '../store/download-store';
 
+let listenersInitialized = false;
+
 export function useDownloads() {
-  const {
-    downloads,
-    torrents,
-    activeFilter,
-    searchQuery,
-    sortBy,
-    sortOrder,
-    selectedIds,
-    setDownloads,
-    upsertDownload,
-    updateProgress,
-    removeDownload,
-    setTorrents,
-    upsertTorrent,
-    setAppVersion,
-    checkForUpdates,
-  } = useDownloadStore();
+  const downloads = useDownloadStore((s) => s.downloads);
+  const torrents = useDownloadStore((s) => s.torrents);
+  const activeFilter = useDownloadStore((s) => s.activeFilter);
+  const searchQuery = useDownloadStore((s) => s.searchQuery);
+  const sortBy = useDownloadStore((s) => s.sortBy);
+  const sortOrder = useDownloadStore((s) => s.sortOrder);
+  const selectedIds = useDownloadStore((s) => s.selectedIds);
 
   useEffect(() => {
-    if (!window.electronAPI) return;
+    if (!window.electronAPI || listenersInitialized) return;
+    listenersInitialized = true;
+
+    const state = useDownloadStore.getState();
 
     window.electronAPI.getVersion().then((v) => {
-      if (v) setAppVersion(v);
+      if (v) useDownloadStore.getState().setAppVersion(v);
     });
 
     const updateTimer = setTimeout(() => {
-      checkForUpdates();
+      useDownloadStore.getState().checkForUpdates();
     }, 2500);
 
-    // Load initial tasks
     window.electronAPI.getAllDownloads().then((list) => {
-      setDownloads(list);
+      useDownloadStore.getState().setDownloads(list);
     });
 
     window.electronAPI.getAllTorrents().then((list) => {
-      setTorrents(list);
+      useDownloadStore.getState().setTorrents(list);
     });
 
-    // Wire real-time IPC listeners
     const unbindProgress = window.electronAPI.onDownloadProgress((prog) => {
-      updateProgress(prog);
+      useDownloadStore.getState().updateProgress(prog);
     });
 
     const unbindAdded = window.electronAPI.onDownloadAdded((task) => {
-      upsertDownload(task);
+      useDownloadStore.getState().upsertDownload(task);
     });
 
     const unbindRemoved = window.electronAPI.onDownloadRemoved?.((id) => {
-      removeDownload(id);
+      useDownloadStore.getState().removeDownload(id);
     });
 
     const unbindStatus = window.electronAPI.onDownloadStatusChanged((task) => {
-      upsertDownload(task);
+      useDownloadStore.getState().upsertDownload(task);
     });
 
     const unbindCompleted = window.electronAPI.onDownloadCompleted((task) => {
-      upsertDownload(task);
+      useDownloadStore.getState().upsertDownload(task);
     });
 
     const unbindError = window.electronAPI.onDownloadError(({ id, error }) => {
-      const existing = downloads.find((d) => d.id === id);
-      if (existing) {
-        upsertDownload({ ...existing, status: 'failed', error });
+      const current = useDownloadStore.getState().downloads.find((d) => d.id === id);
+      if (current) {
+        useDownloadStore.getState().upsertDownload({ ...current, status: 'failed', error });
       }
     });
 
     const unbindTorrent = window.electronAPI.onTorrentProgress((torrent) => {
-      upsertTorrent(torrent);
+      state.upsertTorrent(torrent);
     });
 
     return () => {
+      listenersInitialized = false;
       clearTimeout(updateTimer);
       unbindProgress();
       unbindAdded();
@@ -88,42 +82,38 @@ export function useDownloads() {
     };
   }, []);
 
-  // Filtered and sorted downloads
-  const filteredDownloads = downloads.filter((d) => {
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      if (!d.fileName.toLowerCase().includes(q) && !d.url.toLowerCase().includes(q)) {
+  const sortedDownloads = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    const filtered = downloads.filter((d) => {
+      if (q && !d.fileName.toLowerCase().includes(q) && !d.url.toLowerCase().includes(q)) {
         return false;
       }
-    }
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'downloading') {
+        return d.status === 'downloading' || d.status === 'merging';
+      }
+      if (activeFilter === 'completed') return d.status === 'completed';
+      if (activeFilter === 'paused') return d.status === 'paused';
+      if (activeFilter === 'failed') return d.status === 'failed';
+      if (activeFilter === 'torrents') return false;
+      return d.category === activeFilter;
+    });
 
-    // Category / status filter
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'downloading') return d.status === 'downloading' || d.status === 'merging';
-    if (activeFilter === 'completed') return d.status === 'completed';
-    if (activeFilter === 'paused') return d.status === 'paused';
-    if (activeFilter === 'failed') return d.status === 'failed';
-    if (activeFilter === 'torrents') return false; // Handled separately
-
-    // Category filter
-    return d.category === activeFilter;
-  });
-
-  const sortedDownloads = [...filteredDownloads].sort((a, b) => {
-    let comparison = 0;
-    if (sortBy === 'name') {
-      comparison = a.fileName.localeCompare(b.fileName);
-    } else if (sortBy === 'size') {
-      comparison = a.totalSize - b.totalSize;
-    } else if (sortBy === 'status') {
-      comparison = a.status.localeCompare(b.status);
-    } else {
-      // Date
-      comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'name') {
+        comparison = a.fileName.localeCompare(b.fileName);
+      } else if (sortBy === 'size') {
+        comparison = a.totalSize - b.totalSize;
+      } else if (sortBy === 'status') {
+        comparison = a.status.localeCompare(b.status);
+      } else {
+        comparison = b.createdAt.localeCompare(a.createdAt);
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [downloads, activeFilter, searchQuery, sortBy, sortOrder]);
 
   return {
     downloads: sortedDownloads,

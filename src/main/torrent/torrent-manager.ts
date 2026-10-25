@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Torrent Manager
+// Anything Download Manager — Torrent Manager (WebTorrent Engine)
 // ============================================================================
 
 import { EventEmitter } from 'events';
@@ -10,6 +10,8 @@ import { TorrentTaskWrapper } from './torrent-task';
 import { getDefaultDownloadPath } from '../utils/platform-utils';
 import { ensureDir } from '../utils/file-utils';
 
+const TORRENT_TICK_MS = 1000;
+
 export class TorrentManager extends EventEmitter {
   private static instance: TorrentManager | null = null;
   private client: any = null;
@@ -19,7 +21,7 @@ export class TorrentManager extends EventEmitter {
 
   private constructor() {
     super();
-    this.initClient();
+    void this.initClient();
   }
 
   public static getInstance(): TorrentManager {
@@ -31,7 +33,6 @@ export class TorrentManager extends EventEmitter {
 
   private async initClient(): Promise<void> {
     try {
-      // Dynamic import or require for webtorrent
       const WebTorrent = require('webtorrent');
       this.client = new WebTorrent({
         dht: true,
@@ -45,7 +46,6 @@ export class TorrentManager extends EventEmitter {
 
       this.startProgressTicker();
     } catch (err) {
-      // WebTorrent might require specific polyfills or native bindings in certain environments
       console.warn('WebTorrent client initialization deferred or unavailable:', err);
       this.isAvailable = false;
     }
@@ -54,17 +54,23 @@ export class TorrentManager extends EventEmitter {
   private startProgressTicker(): void {
     if (this.updateInterval) return;
     this.updateInterval = setInterval(() => {
+      let activeTorrents = false;
       for (const wrapper of this.torrents.values()) {
         if (wrapper.nativeTorrent) {
+          activeTorrents = true;
           wrapper.syncWithNative();
           this.emit('progress', wrapper.task);
         }
       }
-    }, 1000);
+      if (!activeTorrents && this.updateInterval) {
+        clearInterval(this.updateInterval);
+        this.updateInterval = null;
+      }
+    }, TORRENT_TICK_MS);
   }
 
   public getAllTorrents(): TorrentTask[] {
-    return Array.from(this.torrents.values()).map((w) => w.task);
+    return Array.from(this.torrents.values(), (w) => w.task);
   }
 
   public async addMagnet(magnetUri: string, customSavePath?: string): Promise<TorrentTask> {
@@ -122,6 +128,10 @@ export class TorrentManager extends EventEmitter {
         wrapper.task.status = 'failed';
         wrapper.task.error = err.message;
       }
+    }
+
+    if (!this.updateInterval) {
+      this.startProgressTicker();
     }
 
     this.emit('torrent-added', wrapper.task);
@@ -185,13 +195,17 @@ export class TorrentManager extends EventEmitter {
       }
     }
 
+    if (!this.updateInterval) {
+      this.startProgressTicker();
+    }
+
     this.emit('torrent-added', wrapper.task);
     return wrapper.task;
   }
 
   public pauseTorrent(id: string): void {
     const wrapper = this.torrents.get(id);
-    if (wrapper && wrapper.nativeTorrent) {
+    if (wrapper?.nativeTorrent) {
       wrapper.nativeTorrent.pause();
       wrapper.task.status = 'paused';
       this.emit('status-changed', wrapper.task);
@@ -200,9 +214,12 @@ export class TorrentManager extends EventEmitter {
 
   public resumeTorrent(id: string): void {
     const wrapper = this.torrents.get(id);
-    if (wrapper && wrapper.nativeTorrent) {
+    if (wrapper?.nativeTorrent) {
       wrapper.nativeTorrent.resume();
       wrapper.task.status = 'downloading';
+      if (!this.updateInterval) {
+        this.startProgressTicker();
+      }
       this.emit('status-changed', wrapper.task);
     }
   }
@@ -211,7 +228,9 @@ export class TorrentManager extends EventEmitter {
     const wrapper = this.torrents.get(id);
     if (wrapper) {
       if (wrapper.nativeTorrent && this.client) {
-        this.client.remove(wrapper.nativeTorrent, { destroyStore: deleteFiles });
+        try {
+          this.client.remove(wrapper.nativeTorrent, { destroyStore: deleteFiles });
+        } catch {}
       }
       this.torrents.delete(id);
       this.emit('torrent-removed', id);

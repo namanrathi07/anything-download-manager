@@ -13,7 +13,9 @@ interface DownloadListProps {
 }
 
 export const DownloadList: React.FC<DownloadListProps> = ({ downloads }) => {
-  const { selectedIds, toggleSelect, setIsNewDownloadOpen } = useDownloadStore();
+  const selectedIds = useDownloadStore((s) => s.selectedIds);
+  const toggleSelect = useDownloadStore((s) => s.toggleSelect);
+  const setIsNewDownloadOpen = useDownloadStore((s) => s.setIsNewDownloadOpen);
 
   if (downloads.length === 0) {
     return (
@@ -25,7 +27,8 @@ export const DownloadList: React.FC<DownloadListProps> = ({ downloads }) => {
           No downloads here
         </h3>
         <p className="text-sm text-surface-500 dark:text-surface-400 max-w-sm mb-4">
-          Add a URL or enable the ADM browser extension to capture downloads automatically from any website.
+          Add a URL or enable the ADM browser extension to capture downloads automatically from any
+          website.
         </p>
         <button
           onClick={() => setIsNewDownloadOpen(true)}

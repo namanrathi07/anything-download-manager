@@ -10,7 +10,7 @@ interface SegmentVisualizerProps {
   segments?: DownloadSegment[];
 }
 
-export const SegmentVisualizer: React.FC<SegmentVisualizerProps> = ({ segments }) => {
+export const SegmentVisualizer: React.FC<SegmentVisualizerProps> = React.memo(({ segments }) => {
   if (!segments || segments.length <= 1) return null;
 
   return (
@@ -33,7 +33,9 @@ export const SegmentVisualizer: React.FC<SegmentVisualizerProps> = ({ segments }
           return (
             <div
               key={seg.index}
-              title={`Segment #${seg.index + 1}: ${pct.toFixed(1)}% (${formatBytes(seg.downloadedBytes)} / ${formatBytes(total)})`}
+              title={`Segment #${seg.index + 1}: ${pct.toFixed(1)}% (${formatBytes(
+                seg.downloadedBytes
+              )} / ${formatBytes(total)})`}
               className="group relative bg-surface-200 dark:bg-surface-800 h-2.5 rounded overflow-hidden"
             >
               <div
@@ -48,4 +50,4 @@ export const SegmentVisualizer: React.FC<SegmentVisualizerProps> = ({ segments }
       </div>
     </div>
   );
-};
+});

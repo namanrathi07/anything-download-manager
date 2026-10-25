@@ -1,8 +1,8 @@
 // ============================================================================
-// Anything Download Manager — Torrent Task
+// Anything Download Manager — Torrent Task Wrapper
 // ============================================================================
 
-import type { TorrentTask, TorrentStatus } from '../../shared/types';
+import type { TorrentTask } from '../../shared/types';
 
 export class TorrentTaskWrapper {
   public task: TorrentTask;
@@ -27,6 +27,7 @@ export class TorrentTaskWrapper {
     this.task.downloadSpeed = t.downloadSpeed || 0;
     this.task.uploadSpeed = t.uploadSpeed || 0;
     this.task.peers = t.numPeers || 0;
+    this.task.seeds = t.numSeeds || t.seeds?.length || 0;
     this.task.ratio = t.ratio || 0;
 
     if (t.done) {
@@ -40,7 +41,7 @@ export class TorrentTaskWrapper {
       this.task.status = 'downloading';
     }
 
-    if (t.files && t.files.length > 0) {
+    if (t.files && t.files.length > 0 && this.task.files.length === 0) {
       this.task.files = t.files.map((f: any) => ({
         name: f.name,
         path: f.path,
@@ -48,6 +49,12 @@ export class TorrentTaskWrapper {
         downloaded: f.downloaded || 0,
         selected: f.selected !== false,
       }));
+    } else if (t.files && t.files.length > 0) {
+      for (let i = 0; i < t.files.length; i++) {
+        if (this.task.files[i]) {
+          this.task.files[i].downloaded = t.files[i].downloaded || 0;
+        }
+      }
     }
   }
 }

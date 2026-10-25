@@ -3,9 +3,22 @@
 // ============================================================================
 
 import { create } from 'zustand';
-import type { DownloadTask, DownloadProgress, TorrentTask, DownloadCategory, UpdateCheckResult } from '../../shared/types';
+import type {
+  DownloadTask,
+  DownloadProgress,
+  TorrentTask,
+  DownloadCategory,
+  UpdateCheckResult,
+} from '../../shared/types';
 
-export type StatusFilter = 'all' | 'downloading' | 'completed' | 'paused' | 'failed' | 'torrents' | DownloadCategory;
+export type StatusFilter =
+  | 'all'
+  | 'downloading'
+  | 'completed'
+  | 'paused'
+  | 'failed'
+  | 'torrents'
+  | DownloadCategory;
 
 interface DownloadState {
   downloads: DownloadTask[];
@@ -20,12 +33,10 @@ interface DownloadState {
   isAboutOpen: boolean;
   isReportIssueOpen: boolean;
 
-  // Version and Update Management
   appVersion: string;
   updateInfo: UpdateCheckResult | null;
   isCheckingUpdate: boolean;
 
-  // Actions
   setDownloads: (downloads: DownloadTask[]) => void;
   upsertDownload: (download: DownloadTask) => void;
   updateProgress: (progress: DownloadProgress) => void;
@@ -78,7 +89,7 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     set((state) => {
       const idx = state.downloads.findIndex((d) => d.id === task.id);
       if (idx >= 0) {
-        const next = [...state.downloads];
+        const next = state.downloads.slice();
         next[idx] = { ...next[idx], ...task };
         return { downloads: next };
       }
@@ -91,7 +102,16 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
       if (idx === -1) return state;
 
       const current = state.downloads[idx];
-      const updated: DownloadTask = {
+      if (
+        current.downloadedSize === prog.downloadedSize &&
+        current.speed === prog.speed &&
+        current.status === prog.status
+      ) {
+        return state;
+      }
+
+      const next = state.downloads.slice();
+      next[idx] = {
         ...current,
         downloadedSize: prog.downloadedSize,
         totalSize: prog.totalSize,
@@ -99,18 +119,34 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
         averageSpeed: prog.averageSpeed,
         progress: prog.progress,
         status: prog.status,
+        segments: prog.segments
+          ? prog.segments.map((seg, i) => ({
+              ...(current.segments[i] || {
+                id: i + 1,
+                downloadId: current.id,
+                startByte: 0,
+                endByte: seg.totalBytes - 1,
+                tempFilePath: '',
+              }),
+              index: seg.index,
+              downloadedBytes: seg.downloadedBytes,
+              speed: seg.speed,
+              status: seg.status,
+            }))
+          : current.segments,
       };
-
-      const next = [...state.downloads];
-      next[idx] = updated;
       return { downloads: next };
     }),
 
   removeDownload: (id) =>
-    set((state) => ({
-      downloads: state.downloads.filter((d) => d.id !== id),
-      selectedIds: new Set(Array.from(state.selectedIds).filter((selId) => selId !== id)),
-    })),
+    set((state) => {
+      const nextSelected = new Set(state.selectedIds);
+      nextSelected.delete(id);
+      return {
+        downloads: state.downloads.filter((d) => d.id !== id),
+        selectedIds: nextSelected,
+      };
+    }),
 
   setTorrents: (torrents) => set({ torrents }),
 
@@ -118,7 +154,7 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     set((state) => {
       const idx = state.torrents.findIndex((t) => t.id === torrent.id);
       if (idx >= 0) {
-        const next = [...state.torrents];
+        const next = state.torrents.slice();
         next[idx] = { ...next[idx], ...torrent };
         return { torrents: next };
       }

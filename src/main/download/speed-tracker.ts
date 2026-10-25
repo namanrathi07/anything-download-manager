@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Speed Tracker
+// Anything Download Manager — Speed Tracker (Bucketed Ring Buffer)
 // ============================================================================
 
 import { SPEED_CALC_WINDOW } from '../../shared/constants';
@@ -9,81 +9,78 @@ interface Sample {
   bytes: number;
 }
 
+const BUCKET_MS = 100;
+
 export class SpeedTracker {
   private samples: Sample[] = [];
+  private head = 0;
+  private windowBytes = 0;
   private totalBytesDownloaded = 0;
   private startTime: number = Date.now();
-  private windowMs: number;
+  private readonly windowMs: number;
 
   constructor(windowMs = SPEED_CALC_WINDOW) {
     this.windowMs = windowMs;
   }
 
-  /**
-   * Reset tracking state
-   */
   public reset(): void {
     this.samples = [];
+    this.head = 0;
+    this.windowBytes = 0;
     this.totalBytesDownloaded = 0;
     this.startTime = Date.now();
   }
 
-  /**
-   * Record new chunk of bytes received
-   */
   public recordBytes(bytes: number): void {
     if (bytes <= 0) return;
     const now = Date.now();
     this.totalBytesDownloaded += bytes;
-    this.samples.push({ time: now, bytes });
+    this.windowBytes += bytes;
+
+    const len = this.samples.length;
+    if (len > this.head && now - this.samples[len - 1].time < BUCKET_MS) {
+      this.samples[len - 1].bytes += bytes;
+    } else {
+      this.samples.push({ time: now, bytes });
+    }
+
     this.cleanOldSamples(now);
   }
 
-  /**
-   * Current instantaneous speed (bytes per second over the sliding window)
-   */
   public getCurrentSpeed(): number {
     const now = Date.now();
     this.cleanOldSamples(now);
 
-    if (this.samples.length < 2) return 0;
+    const activeCount = this.samples.length - this.head;
+    if (activeCount === 0 || this.windowBytes <= 0) return 0;
 
-    let windowBytes = 0;
-    for (const s of this.samples) {
-      windowBytes += s.bytes;
-    }
+    const oldest = this.samples[this.head].time;
+    const durationSec = Math.max(0.1, (now - oldest) / 1000);
 
-    const oldest = this.samples[0].time;
-    const durationSec = (now - oldest) / 1000;
-    if (durationSec <= 0) return 0;
-
-    return Math.round(windowBytes / durationSec);
+    return Math.round(this.windowBytes / durationSec);
   }
 
-  /**
-   * Overall average speed since start (bytes per second)
-   */
   public getAverageSpeed(): number {
     const durationSec = (Date.now() - this.startTime) / 1000;
-    if (durationSec <= 0) return 0;
+    if (durationSec <= 0.1) return 0;
     return Math.round(this.totalBytesDownloaded / durationSec);
   }
 
-  /**
-   * Estimates time remaining in seconds given total size and current downloaded size
-   */
   public calculateETA(remainingBytes: number): number {
     if (remainingBytes <= 0) return 0;
-    const currentSpeed = this.getCurrentSpeed();
-    const speed = currentSpeed > 0 ? currentSpeed : this.getAverageSpeed();
-    if (speed <= 0) return -1;
-    return Math.round(remainingBytes / speed);
+    const speed = this.getCurrentSpeed() || this.getAverageSpeed();
+    return speed > 0 ? Math.round(remainingBytes / speed) : -1;
   }
 
   private cleanOldSamples(now: number): void {
     const cutoff = now - this.windowMs;
-    while (this.samples.length > 0 && this.samples[0].time < cutoff) {
-      this.samples.shift();
+    while (this.head < this.samples.length && this.samples[this.head].time < cutoff) {
+      this.windowBytes -= this.samples[this.head].bytes;
+      this.head++;
+    }
+    if (this.head > 64 && this.head * 2 >= this.samples.length) {
+      this.samples = this.samples.slice(this.head);
+      this.head = 0;
     }
   }
 }
