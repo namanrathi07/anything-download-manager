@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — IPC Handlers
+// Anything Download Manager — IPC Handlers (Persisted Settings & Auto-Start)
 // ============================================================================
 
 import { ipcMain, dialog, shell, app } from 'electron';
@@ -12,6 +12,7 @@ import type { TorrentManager } from './torrent/torrent-manager';
 import type { AppDatabase } from './database/database';
 import type { WindowManager } from './window-manager';
 import { UrlResolver, sharedHttpsAgent } from './download/url-resolver';
+import { ExtensionInstaller } from './extension-installer';
 import { getPlatform, getDefaultDownloadPath } from './utils/platform-utils';
 import type { AppSettings, NewDownloadRequest, UpdateCheckResult } from '../shared/types';
 import {
@@ -29,9 +30,9 @@ import {
 
 const baseDownloadPath = getDefaultDownloadPath();
 
-const defaultSettings: AppSettings = {
+export const defaultSettings: AppSettings = {
   defaultSavePath: baseDownloadPath,
-  launchAtStartup: false,
+  launchAtStartup: true,
   minimizeToTray: true,
   showNotifications: true,
   theme: 'dark',
@@ -74,14 +75,18 @@ const defaultSettings: AppSettings = {
   proxyPassword: '',
 };
 
-let currentSettings: AppSettings = { ...defaultSettings };
-
 export function registerIPCHandlers(
   downloadManager: DownloadManager,
   torrentManager: TorrentManager,
   database: AppDatabase,
   windowManager: WindowManager
 ): void {
+  // Load persisted settings from disk and apply startup/tray preferences
+  let currentSettings: AppSettings = database.getSettings(defaultSettings);
+  windowManager.setMinimizeToTray(currentSettings.minimizeToTray);
+  downloadManager.setMaxConcurrent(currentSettings.maxConcurrentDownloads);
+  ExtensionInstaller.applyAutoStart(currentSettings.launchAtStartup);
+
   const sendToMainWindow = (channel: string, ...args: any[]) => {
     const main = windowManager.getMainWindow();
     if (main && !main.isDestroyed()) {
@@ -141,7 +146,11 @@ export function registerIPCHandlers(
   });
 
   ipcMain.handle(IPC.DOWNLOAD_ADD, (_event, req: NewDownloadRequest) => {
-    return downloadManager.addDownload(req);
+    return downloadManager.addDownload({
+      ...req,
+      savePath: req.savePath || currentSettings.defaultSavePath,
+      segmentCount: req.segmentCount || currentSettings.defaultSegmentCount,
+    });
   });
 
   ipcMain.handle(IPC.DOWNLOAD_PAUSE, (_event, id: string) => {
@@ -196,11 +205,11 @@ export function registerIPCHandlers(
   });
 
   ipcMain.handle(IPC.TORRENT_ADD, (_event, magnetUri: string, savePath?: string) => {
-    return torrentManager.addMagnet(magnetUri, savePath);
+    return torrentManager.addMagnet(magnetUri, savePath || currentSettings.torrentSavePath);
   });
 
   ipcMain.handle(IPC.TORRENT_ADD_FILE, (_event, filePath: string, savePath?: string) => {
-    return torrentManager.addTorrentFile(filePath, savePath);
+    return torrentManager.addTorrentFile(filePath, savePath || currentSettings.torrentSavePath);
   });
 
   ipcMain.handle(IPC.TORRENT_PAUSE, (_event, id: string) => {
@@ -225,13 +234,26 @@ export function registerIPCHandlers(
 
   ipcMain.handle(IPC.SETTINGS_SET, (_event, newSettings: Partial<AppSettings>) => {
     currentSettings = { ...currentSettings, ...newSettings };
-    if (newSettings.maxConcurrentDownloads) {
+    database.saveSettings(currentSettings);
+
+    if (typeof newSettings.maxConcurrentDownloads === 'number') {
       downloadManager.setMaxConcurrent(newSettings.maxConcurrentDownloads);
     }
+    if (typeof newSettings.minimizeToTray === 'boolean') {
+      windowManager.setMinimizeToTray(newSettings.minimizeToTray);
+    }
+    if (typeof newSettings.launchAtStartup === 'boolean') {
+      ExtensionInstaller.applyAutoStart(newSettings.launchAtStartup);
+    }
+    return currentSettings;
   });
 
   ipcMain.handle(IPC.SETTINGS_RESET, () => {
     currentSettings = { ...defaultSettings };
+    database.saveSettings(currentSettings);
+    windowManager.setMinimizeToTray(currentSettings.minimizeToTray);
+    downloadManager.setMaxConcurrent(currentSettings.maxConcurrentDownloads);
+    ExtensionInstaller.applyAutoStart(currentSettings.launchAtStartup);
     return currentSettings;
   });
 
@@ -239,7 +261,7 @@ export function registerIPCHandlers(
     const main = windowManager.getMainWindow();
     const result = await dialog.showOpenDialog(main || (undefined as any), {
       properties: ['openDirectory', 'createDirectory'],
-      defaultPath: defaultPath || baseDownloadPath,
+      defaultPath: defaultPath || currentSettings.defaultSavePath || baseDownloadPath,
     });
     if (!result.canceled && result.filePaths.length > 0) {
       return result.filePaths[0];
@@ -267,6 +289,7 @@ export function registerIPCHandlers(
   });
 
   ipcMain.on(IPC.APP_QUIT, () => {
+    windowManager.setQuitting(true);
     app.quit();
   });
 
@@ -310,6 +333,7 @@ export function registerIPCHandlers(
       osRelease: os.release(),
       totalMemory: `${Math.round(os.totalmem() / (1024 * 1024 * 1024))} GB`,
       freeMemory: `${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB`,
+      extensionPath: ExtensionInstaller.getInstalledExtensionPath(),
     };
   });
 
@@ -338,7 +362,10 @@ export function registerIPCHandlers(
               https
                 .get(
                   res.headers.location,
-                  { headers: { 'User-Agent': 'Anything-Download-Manager' }, agent: sharedHttpsAgent },
+                  {
+                    headers: { 'User-Agent': 'Anything-Download-Manager' },
+                    agent: sharedHttpsAgent,
+                  },
                   (redirRes) => {
                     let data = '';
                     redirRes.on('data', (chunk) => (data += chunk));
@@ -403,7 +430,9 @@ export function registerIPCHandlers(
       const arch = process.arch;
 
       if (platform === 'win32') {
-        matchingAsset = assets.find((a) => a.name.endsWith('.exe'));
+        matchingAsset =
+          assets.find((a) => a.name.endsWith('setup.exe')) ||
+          assets.find((a) => a.name.endsWith('.exe'));
       } else if (platform === 'darwin') {
         matchingAsset = assets.find((a) =>
           arch === 'arm64'

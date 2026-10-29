@@ -1,5 +1,5 @@
 // ============================================================================
-// Anything Download Manager — Window Manager (Singleton & Lifecycle Optimized)
+// Anything Download Manager — Window Manager (Tray-Close & Lifecycle Safe)
 // ============================================================================
 
 import { BrowserWindow, app } from 'electron';
@@ -10,6 +10,8 @@ export class WindowManager {
   private mainWindow: BrowserWindow | null = null;
   private popupWindow: BrowserWindow | null = null;
   private isDev = !app.isPackaged;
+  private isQuitting = false;
+  private minimizeToTray = true;
 
   private constructor() {}
 
@@ -20,6 +22,22 @@ export class WindowManager {
     return WindowManager.instance;
   }
 
+  public setQuitting(quitting: boolean): void {
+    this.isQuitting = quitting;
+  }
+
+  public isAppQuitting(): boolean {
+    return this.isQuitting;
+  }
+
+  public setMinimizeToTray(enabled: boolean): void {
+    this.minimizeToTray = enabled;
+  }
+
+  public getMinimizeToTray(): boolean {
+    return this.minimizeToTray;
+  }
+
   public getMainWindow(): BrowserWindow | null {
     return this.mainWindow && !this.mainWindow.isDestroyed() ? this.mainWindow : null;
   }
@@ -28,11 +46,28 @@ export class WindowManager {
     return this.popupWindow && !this.popupWindow.isDestroyed() ? this.popupWindow : null;
   }
 
-  public createMainWindow(): BrowserWindow {
+  public showMainWindow(): BrowserWindow {
     const existing = this.getMainWindow();
     if (existing) {
       if (existing.isMinimized()) existing.restore();
+      if (!existing.isVisible()) existing.show();
       existing.focus();
+      if (process.platform === 'darwin') {
+        app.dock?.show();
+      }
+      return existing;
+    }
+    return this.createMainWindow(false);
+  }
+
+  public createMainWindow(startHidden = false): BrowserWindow {
+    const existing = this.getMainWindow();
+    if (existing) {
+      if (!startHidden) {
+        if (existing.isMinimized()) existing.restore();
+        if (!existing.isVisible()) existing.show();
+        existing.focus();
+      }
       return existing;
     }
 
@@ -55,7 +90,17 @@ export class WindowManager {
     });
 
     this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow?.show();
+      if (!startHidden) {
+        this.mainWindow?.show();
+      }
+    });
+
+    // Intercept window close button (X) so ADM minimizes to system tray instead of exiting
+    this.mainWindow.on('close', (event) => {
+      if (!this.isQuitting && this.minimizeToTray) {
+        event.preventDefault();
+        this.mainWindow?.hide();
+      }
     });
 
     if (this.isDev && process.env.VITE_DEV_SERVER_URL) {
@@ -75,6 +120,7 @@ export class WindowManager {
   public createPopupWindow(): BrowserWindow {
     const existing = this.getPopupWindow();
     if (existing) {
+      if (!existing.isVisible()) existing.show();
       existing.focus();
       return existing;
     }

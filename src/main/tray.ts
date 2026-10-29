@@ -1,92 +1,100 @@
 // ============================================================================
-// Anything Download Manager — System Tray
+// Anything Download Manager — Cross-Platform System Tray (Mac / Win / Linux)
 // ============================================================================
 
-import { Tray, Menu, app, BrowserWindow, nativeImage } from 'electron';
+import { Tray, Menu, nativeImage, app, BrowserWindow } from 'electron';
+import fs from 'fs';
 import path from 'path';
+import { WindowManager } from './window-manager';
+import { ExtensionInstaller } from './extension-installer';
 
-let tray: Tray | null = null;
+let trayInstance: Tray | null = null;
 
-export function createTray(mainWindow: BrowserWindow): Tray {
-  if (tray) return tray;
+// Embedded 16x16 blue lightning/arrow PNG fallback so Tray creation never fails if asset path is missing
+const FALLBACK_TRAY_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABMSURBVDhPYxgFo2AU0BswMjIy/mdgYPjPgAsw4dLAgAswY9OITQMDNsB48eJFFlR88eJFFnR12DSgG4BtALoB6AagG4BuAAMDAwB2ThX99H+t6wAAAABJRU5ErkJggg==';
 
-  // Resolve tray icon path
-  const iconPath = path.join(__dirname, '../../assets/tray-icon.png');
-  let icon = nativeImage.createFromPath(iconPath);
+function resolveTrayImage(): Electron.NativeImage {
+  const isWin = process.platform === 'win32';
+  const iconFileNames = isWin
+    ? ['icon.ico', 'tray-icon.png', 'icon.png']
+    : ['tray-icon.png', 'icon.png'];
 
-  // Fallback if file not found
-  if (icon.isEmpty()) {
-    const size = 16;
-    const canvas = Buffer.alloc(size * size * 4);
-    for (let i = 0; i < size * size; i++) {
-      canvas[i * 4] = 255;
-      canvas[i * 4 + 1] = 255;
-      canvas[i * 4 + 2] = 255;
-      canvas[i * 4 + 3] = 255;
+  const searchDirs = [
+    path.join(process.resourcesPath || '', 'assets'),
+    path.join(app.getAppPath(), 'assets'),
+    path.resolve(__dirname, '../../assets'),
+    path.resolve(process.cwd(), 'assets'),
+  ];
+
+  for (const dir of searchDirs) {
+    for (const fileName of iconFileNames) {
+      const fullPath = path.join(dir, fileName);
+      if (fs.existsSync(fullPath)) {
+        const img = nativeImage.createFromPath(fullPath);
+        if (!img.isEmpty()) {
+          const size = process.platform === 'darwin' ? 18 : 16;
+          return img.resize({ width: size, height: size });
+        }
+      }
     }
-    icon = nativeImage.createFromBuffer(canvas, { width: size, height: size });
   }
 
-  // On macOS, set template image for dark/light menu bar support
-  if (process.platform === 'darwin') {
-    icon.setTemplateImage(true);
+  return nativeImage.createFromDataURL(`data:image/png;base64,${FALLBACK_TRAY_PNG_BASE64}`);
+}
+
+export function createTray(_mainWindow?: BrowserWindow): Tray {
+  if (trayInstance) {
+    return trayInstance;
   }
 
-  tray = new Tray(icon);
-  tray.setToolTip('Anything Download Manager (ADM)');
+  const windowManager = WindowManager.getInstance();
+  const icon = resolveTrayImage();
+
+  trayInstance = new Tray(icon);
+  trayInstance.setToolTip('Anything Download Manager (ADM)');
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show Anything Download Manager',
+      label: 'Open Anything Download Manager',
       click: () => {
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.show();
-        mainWindow.focus();
+        windowManager.showMainWindow();
       },
     },
     { type: 'separator' },
     {
-      label: 'Add New Download...',
+      label: 'Install Browser Extension...',
       click: () => {
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.show();
-        mainWindow.focus();
-        mainWindow.webContents.send('app:show-new-download');
+        windowManager.showMainWindow();
+        void ExtensionInstaller.promptAndOpenExtensionFolder();
       },
     },
     { type: 'separator' },
     {
-      label: 'Quit',
+      label: 'Quit ADM',
       click: () => {
+        windowManager.setQuitting(true);
         app.quit();
       },
     },
   ]);
 
-  tray.setContextMenu(contextMenu);
+  trayInstance.setContextMenu(contextMenu);
 
-  tray.on('click', () => {
-    if (mainWindow.isVisible()) {
-      mainWindow.hide();
-    } else {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
+  trayInstance.on('click', () => {
+    if (process.platform !== 'darwin') {
+      const win = windowManager.getMainWindow();
+      if (win && win.isVisible() && win.isFocused()) {
+        win.hide();
+      } else {
+        windowManager.showMainWindow();
+      }
     }
   });
 
-  tray.on('double-click', () => {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.show();
-    mainWindow.focus();
+  trayInstance.on('double-click', () => {
+    windowManager.showMainWindow();
   });
 
-  return tray;
-}
-
-export function destroyTray(): void {
-  if (tray) {
-    tray.destroy();
-    tray = null;
-  }
+  return trayInstance;
 }

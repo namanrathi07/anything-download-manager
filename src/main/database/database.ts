@@ -6,12 +6,14 @@ import fs from 'fs';
 import path from 'path';
 import { getAppDataPath } from '../utils/platform-utils';
 import { ensureDir } from '../utils/file-utils';
-import type { DownloadTask, TorrentTask, DownloadStats } from '../../shared/types';
+import type { DownloadTask, TorrentTask, DownloadStats, AppSettings } from '../../shared/types';
 
 interface DatabaseSchema {
   version: number;
   downloads: Record<string, DownloadTask>;
   torrents: Record<string, TorrentTask>;
+  settings?: Partial<AppSettings>;
+  extensionPromptShown?: boolean;
 }
 
 const SAVE_DEBOUNCE_MS = 500;
@@ -26,6 +28,8 @@ export class AppDatabase {
     version: 1,
     downloads: {},
     torrents: {},
+    settings: {},
+    extensionPromptShown: false,
   };
 
   private constructor() {
@@ -52,12 +56,14 @@ export class AppDatabase {
             version: parsed.version || 1,
             downloads: parsed.downloads || {},
             torrents: parsed.torrents || {},
+            settings: parsed.settings || {},
+            extensionPromptShown: Boolean(parsed.extensionPromptShown),
           };
         }
       }
     } catch (err: any) {
       console.warn('[ADM Database] Failed to load store, initializing fresh state:', err.message);
-      this.data = { version: 1, downloads: {}, torrents: {} };
+      this.data = { version: 1, downloads: {}, torrents: {}, settings: {}, extensionPromptShown: false };
     }
   }
 
@@ -105,6 +111,35 @@ export class AppDatabase {
     }
   }
 
+  // ─── Settings & Onboarding Persistence ────────────────────────────────────
+
+  public getSettings(defaults: AppSettings): AppSettings {
+    return {
+      ...defaults,
+      ...(this.data.settings || {}),
+      categoryPaths: {
+        ...defaults.categoryPaths,
+        ...(this.data.settings?.categoryPaths || {}),
+      },
+    };
+  }
+
+  public saveSettings(settings: AppSettings): void {
+    this.data.settings = { ...settings };
+    this.scheduleSave();
+  }
+
+  public isExtensionPromptShown(): boolean {
+    return Boolean(this.data.extensionPromptShown);
+  }
+
+  public setExtensionPromptShown(shown: boolean): void {
+    this.data.extensionPromptShown = shown;
+    this.scheduleSave();
+  }
+
+  // ─── Download Operations ──────────────────────────────────────────────────
+
   public saveDownload(task: DownloadTask): void {
     this.data.downloads[task.id] = { ...task };
     this.scheduleSave();
@@ -140,6 +175,8 @@ export class AppDatabase {
     }
   }
 
+  // ─── Torrent Operations ───────────────────────────────────────────────────
+
   public saveTorrent(torrent: TorrentTask): void {
     this.data.torrents[torrent.id] = { ...torrent };
     this.scheduleSave();
@@ -157,6 +194,8 @@ export class AppDatabase {
       this.scheduleSave();
     }
   }
+
+  // ─── Statistics ───────────────────────────────────────────────────────────
 
   public getStats(): DownloadStats {
     const tasks = Object.values(this.data.downloads);

@@ -2,12 +2,13 @@
 // Anything Download Manager — Main Process Entry Point
 // ============================================================================
 
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import { DownloadManager } from './download/download-manager';
 import { TorrentManager } from './torrent/torrent-manager';
 import { AppDatabase } from './database/database';
 import { WindowManager } from './window-manager';
 import { NativeMessagingHost } from './native-messaging';
+import { ExtensionInstaller } from './extension-installer';
 import { registerIPCHandlers } from './ipc-handlers';
 import { createTray } from './tray';
 import { IPC } from '../shared/ipc-channels';
@@ -25,12 +26,7 @@ if (!gotTheLock) {
   let nativeMessagingHost: NativeMessagingHost;
 
   app.on('second-instance', (_event, commandLine) => {
-    const mainWindow = windowManager?.getMainWindow();
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
-    }
+    windowManager?.showMainWindow();
 
     const lastArg = commandLine[commandLine.length - 1];
     if (lastArg && lastArg.startsWith('magnet:')) {
@@ -41,6 +37,13 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(async () => {
+    // 1. On macOS, offer to move app to /Applications if launched from mounted DMG
+    await ExtensionInstaller.ensureInstalledInApplications();
+
+    // 2. Provision bundled browser extension into AppData & register Native Messaging hosts
+    ExtensionInstaller.provisionExtension();
+
+    // 3. Initialize Database & Managers
     database = AppDatabase.getInstance();
     downloadManager = DownloadManager.getInstance();
     torrentManager = TorrentManager.getInstance();
@@ -50,12 +53,19 @@ if (!gotTheLock) {
       downloadManager.restoreTask(task);
     }
 
+    // 4. Initialize WindowManager & System Tray
     windowManager = WindowManager.getInstance();
-    const mainWindow = windowManager.createMainWindow();
+    const startHidden =
+      process.argv.includes('--hidden') ||
+      (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAsHidden);
 
+    const mainWindow = windowManager.createMainWindow(startHidden);
     createTray(mainWindow);
+
+    // 5. Register IPC Handlers & Apply Persisted Settings
     registerIPCHandlers(downloadManager, torrentManager, database, windowManager);
 
+    // 6. Setup Browser Extension Integration Gateway
     nativeMessagingHost = new NativeMessagingHost();
 
     nativeMessagingHost.on('download-intercepted', (msg: BrowserDownloadMessage) => {
@@ -84,21 +94,23 @@ if (!gotTheLock) {
     });
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        windowManager.createMainWindow();
-      }
+      windowManager.showMainWindow();
     });
   });
 
   app.on('before-quit', () => {
+    windowManager?.setQuitting(true);
     nativeMessagingHost?.stop();
     torrentManager?.destroy();
     database?.close();
   });
 
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit();
+    // Keep ADM running in the system tray on all platforms unless explicitly quitting
+    if (windowManager?.isAppQuitting() || !windowManager?.getMinimizeToTray()) {
+      if (process.platform !== 'darwin') {
+        app.quit();
+      }
     }
   });
 }
