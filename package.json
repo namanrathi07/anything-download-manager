@@ -1,6 +1,6 @@
 {
   "name": "anything-download-manager",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Open-source cross-platform download manager with multi-segment acceleration, browser integration, and torrent support",
   "main": "dist/main/index.js",
   "author": "Naman Rathi <naman@example.com>",

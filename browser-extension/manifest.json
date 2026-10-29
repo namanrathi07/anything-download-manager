@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Anything Download Manager",
   "short_name": "ADM",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Integrate your browser with ADM for accelerated downloads",
   "homepage_url": "https://github.com/namanrathi07/anything-download-manager",
   "permissions": [

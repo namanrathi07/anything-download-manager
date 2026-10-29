@@ -79,7 +79,7 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
   isAboutOpen: false,
   isReportIssueOpen: false,
 
-  appVersion: '1.0.1',
+  appVersion: '1.0.2',
   updateInfo: null,
   isCheckingUpdate: false,
 
